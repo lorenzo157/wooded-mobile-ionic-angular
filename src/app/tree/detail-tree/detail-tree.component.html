@@ -1,0 +1,285 @@
+<ion-header>
+  <ion-toolbar>
+    <app-navigation></app-navigation>
+  </ion-toolbar>
+</ion-header>
+<ion-content *ngIf="tree">
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>ID: {{ tree.idTree }}</ion-card-title>
+      <ion-card-subtitle>{{ tree.address }}</ion-card-subtitle>
+    </ion-card-header>
+    <ion-card-content>
+      <!-- Image Section -->
+      <ion-item *ngIf="tree.photoFileName" lines="none">
+        <img
+          [src]="tree.photoFileName"
+          alt="Sin foto o ingrese mas tarde para visualizarla si el árbol es recien creado o actualizado"
+        />
+      </ion-item>
+      <!-- Riesgo -->
+      <ion-item>
+        <ion-label
+          ><strong>Nivel de riesgo:</strong> {{ tree.risk || "N/A" }}</ion-label
+        >
+      </ion-item>
+      <!-- Ubicacion -->
+      <ion-card-header class="sub-title blue">
+        <ion-card-title class="text-color"> Ubicación </ion-card-title>
+      </ion-card-header>
+      <ion-item>
+        <ion-label
+          ><strong>Barrio:</strong>
+          {{ tree.neighborhoodName || "N/A" }}</ion-label
+        >
+      </ion-item>
+      <ion-item *ngIf="tree.cityBlock">
+        <ion-label><strong>Manzana:</strong> {{ tree.cityBlock }}</ion-label>
+      </ion-item>
+      <ion-item>
+        <ion-label
+          ><strong>Latitud:</strong> {{ tree.latitude || "N/A" }}</ion-label
+        >
+      </ion-item>
+      <ion-item>
+        <ion-label
+          ><strong>Longitud:</strong> {{ tree.longitude || "N/A" }}</ion-label
+        >
+      </ion-item>
+      <ion-item *ngIf="tree.treesInTheBlock">
+        <ion-label
+          ><strong>Árboles en la cuadra:</strong>
+          {{ tree.treesInTheBlock }}</ion-label
+        >
+      </ion-item>
+
+      <!-- Caracteristicas del arbol -->
+      <ion-card-header class="sub-title green">
+        <ion-card-title class="text-color">
+          Características del árbol
+        </ion-card-title>
+      </ion-card-header>
+      <ion-item *ngIf="tree.isMissing">
+        <ion-label
+          ><strong>¿Es árbol faltante?</strong>
+          {{ tree.isMissing ? "Si" : "No" }}</ion-label
+        >
+      </ion-item>
+      <ion-item *ngIf="tree.isDead">
+        <ion-label
+          ><strong>¿Está muerto?</strong>
+          {{ tree.isDead ? "Si" : "No" }}</ion-label
+        >
+      </ion-item>
+      <div *ngIf="!tree.isMissing && !tree.isDead">
+        <ion-item>
+          <ion-label
+            ><strong>Tipo de arbol:</strong>
+            {{ tree.treeTypeName || "N/A" }}</ion-label
+          >
+        </ion-item>
+        <ion-item *ngIf="tree.gender">
+          <ion-label><strong>Género:</strong> {{ tree.gender }}</ion-label>
+        </ion-item>
+        <ion-item *ngIf="tree.species">
+          <ion-label><strong>Especie:</strong> {{ tree.species }}</ion-label>
+        </ion-item>
+        <ion-item *ngIf="tree.scientificName">
+          <ion-label
+            ><strong>Nombre científico:</strong>
+            {{ tree.scientificName }}</ion-label
+          >
+        </ion-item>
+        <ion-item>
+          <ion-label
+            ><strong>Perímetro:</strong>
+            {{ tree.perimeter || "N/A" }} m</ion-label
+          >
+        </ion-item>
+        <ion-item>
+          <ion-label
+            ><strong>Altura:</strong> {{ tree.height || "N/A" }} m</ion-label
+          >
+        </ion-item>
+        <ion-item>
+          <ion-label
+            ><strong>Inclinación:</strong>
+            {{ tree.incline || "N/A" }} °</ion-label
+          >
+        </ion-item>
+        <ion-item *ngIf="tree.diseasesNames.length > 0">
+          <ion-label
+            ><strong>Enfermedades:</strong>
+            {{ tree.diseasesNames.join(", ") }}</ion-label
+          >
+        </ion-item>
+        <ion-item *ngIf="tree.pestsNames.length > 0">
+          <ion-label
+            ><strong>Plagas:</strong>
+            {{ tree.pestsNames.join(", ") }}</ion-label
+          >
+        </ion-item>
+        <ion-item>
+          <ion-label
+            ><strong>Valor del árbol:</strong>
+            {{ tree.treeValue || "N/A" }}</ion-label
+          >
+        </ion-item>
+        <!-- factores de carga -->
+        <ion-card-header class="sub-title yellow">
+          <ion-card-title class="text-color">
+            Factores de carga
+          </ion-card-title>
+        </ion-card-header>
+        <ion-item>
+          <ion-label
+            ><strong>Exposición al viento:</strong>
+            {{ tree.windExposure || "N/A" }}</ion-label
+          >
+        </ion-item>
+        <ion-item>
+          <ion-label
+            ><strong>Vigor:</strong> {{ tree.vigor || "N/A" }}</ion-label
+          >
+        </ion-item>
+        <ion-item>
+          <ion-label
+            ><strong>Densidad de copa:</strong>
+            {{ tree.canopyDensity || "N/A" }}</ion-label
+          >
+        </ion-item>
+        <!-- condiciones de sitio -->
+        <ion-card-header class="sub-title violet">
+          <ion-card-title class="text-color">
+            Condiciones del sitio
+          </ion-card-title>
+        </ion-card-header>
+        <ion-item *ngIf="tree.conflictsNames.length > 0">
+          <ion-label
+            ><strong>Conflcitos:</strong>
+            {{ tree.conflictsNames.join(", ") }}</ion-label
+          >
+        </ion-item>
+
+        <ion-item>
+          <ion-label
+            ><strong
+              >¿Plato radicular levantado, rajado o raíces expuestas?</strong
+            >
+            {{ tree.exposedRoots ? "Si" : "No" }}</ion-label
+          >
+        </ion-item>
+        <ion-item>
+          <ion-label
+            ><strong>Espacio de crecimiento:</strong>
+            {{ tree.growthSpace || "N/A" }}</ion-label
+          >
+        </ion-item>
+        <!-- Blanco de bajo del árbol -->
+        <ion-card-header class="sub-title red">
+          <ion-card-title class="text-color">
+            Blanco debajo del árbol
+          </ion-card-title>
+        </ion-card-header>
+        <ion-item>
+          <ion-label
+            ><strong>¿Qué hay bajo el arbol?(blanco)</strong>
+            {{ tree.useUnderTheTree || "N/A" }}</ion-label
+          >
+        </ion-item>
+        <ion-item>
+          <ion-label
+            ><strong>¿Con qué frecuencia se encuentra?</strong>
+            {{ tree.frequencyUse || "N/A" }}</ion-label
+          >
+        </ion-item>
+        <ion-item>
+          <ion-label
+            ><strong>¿Se puede mover el blanco bajo del árbol?</strong>
+            {{ tree.isMovable ? "Si" : "No" }}</ion-label
+          >
+        </ion-item>
+        <ion-item>
+          <ion-label
+            ><strong>¿Se puede restringir el blanco bajo del árbol?</strong>
+            {{ tree.isRestrictable ? "Si" : "No" }}</ion-label
+          >
+        </ion-item>
+        <ion-item>
+          <ion-label
+            ><strong>Potencial de daño del arbol o rama si se cae:</strong>
+            {{ tree.potentialDamage || "N/A" }}</ion-label
+          >
+        </ion-item>
+        <!-- Defectos en raices  -->
+        <ion-card-header class="sub-title orange">
+          <ion-card-title class="text-color">
+            Defectos en raices
+          </ion-card-title>
+        </ion-card-header>
+        <ion-item *ngFor="let defect of defectDtoRoots">
+          <ion-list>
+            <ion-label
+              ><strong>Nombre: {{ defect.defectName }}</strong></ion-label
+            >
+            <p>Descripción: {{ defect.textDefectValue }}</p>
+            <p>Severidad: {{ defect.defectValue }}</p>
+          </ion-list>
+        </ion-item>
+
+        <!-- Defectos en tronco o cuello -->
+        <ion-card-header class="sub-title orange">
+          <ion-card-title class="text-color">
+            Defectos en tronco o cuello
+          </ion-card-title>
+        </ion-card-header>
+        <ion-item *ngFor="let defect of defectDtoTrunk">
+          <ion-list>
+            <ion-label
+              ><strong>Nombre: {{ defect.defectName }}</strong></ion-label
+            >
+            <p>Descripción: {{ defect.textDefectValue }}</p>
+            <p>Severidad: {{ defect.defectValue }}</p>
+          </ion-list>
+        </ion-item>
+
+        <!-- Defectos en ramas estructurales y ramas menores -->
+        <ion-card-header class="sub-title orange">
+          <ion-card-title class="text-color">
+            Defectos en ramas estructurales y ramas menores
+          </ion-card-title>
+        </ion-card-header>
+        <ion-item *ngFor="let defect of defectDtoBranches">
+          <ion-list>
+            <ion-label
+              ><strong>Nombre: {{ defect.defectName }}</strong></ion-label
+            >
+            <p>Descripción: {{ defect.textDefectValue }}</p>
+            <p>Severidad: {{ defect.defectValue }}</p>
+            <p *ngIf="defect.branches">Ramas afectadas {{ defect.branches }}</p>
+          </ion-list>
+        </ion-item>
+      </div>
+      <!-- Intervenciones -->
+      <ion-card-header class="sub-title gray">
+        <ion-card-title class="text-color"> Intervenciones </ion-card-title>
+      </ion-card-header>
+      <ion-item *ngIf="tree.interventionsNames.length > 0">
+        <ion-label
+          ><strong>Intervenciones a aplicar:</strong>
+          {{ tree.interventionsNames.join(", ") }}</ion-label
+        >
+      </ion-item>
+    </ion-card-content>
+  </ion-card>
+  <ion-row class="ion-justify-content-center button-container">
+    <ion-button expand="block" color="primary" (click)="updateTree()">
+      Actualizar árbol
+    </ion-button>
+  </ion-row>
+  <ion-row class="ion-justify-content-center button-container">
+    <ion-button expand="block" color="primary" (click)="createTree()">
+      Registrar un nuevo árbol
+    </ion-button>
+  </ion-row>
+</ion-content>

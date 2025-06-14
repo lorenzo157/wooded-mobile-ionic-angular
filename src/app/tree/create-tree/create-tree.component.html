@@ -1,0 +1,854 @@
+<ion-header>
+  <ion-toolbar>
+    <app-navigation></app-navigation>
+  </ion-toolbar>
+  <ion-toolbar>
+    <ion-title>{{
+      idTree ? "Actualización del árbol ID: " + idTree : "Registro de árbol"
+    }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+<ion-content>
+  <ion-card>
+    <form [formGroup]="treeForm" (ngSubmit)="onSubmit()">
+      <ion-card-header class="sub-title blue">
+        <ion-card-title class="text-color"> Ubicación </ion-card-title>
+      </ion-card-header>
+      <!-- address -->
+      <ion-item lines="none">
+        <ion-input
+          label="Dirección"
+          labelPlacement="floating"
+          errorText="Invalid"
+          formControlName="address"
+        ></ion-input>
+      </ion-item>
+      <!-- cityBlock -->
+      <ion-item>
+        <ion-input
+          type="number"
+          label="Manzana(opcional)"
+          labelPlacement="floating"
+          formControlName="cityBlock"
+        ></ion-input>
+      </ion-item>
+
+      <ion-row>
+        <ion-col size="auto">
+          <ion-button (click)="takePhoto()">Tomar foto</ion-button>
+        </ion-col>
+        <ion-col>
+          <ion-item>
+            <ion-input
+              [readonly]="true"
+              label="archivo"
+              labelPlacement="floating"
+              formControlName="photoFileName"
+            ></ion-input>
+          </ion-item>
+        </ion-col>
+      </ion-row>
+
+      <ion-item>
+        <ion-label>Obtener posición actual</ion-label>
+        <ion-checkbox
+          class="check"
+          (ionChange)="onTogglePosition($event)"
+        ></ion-checkbox>
+        <ion-input
+          [readonly]="true"
+          type="number"
+          label="Latitud"
+          labelPlacement="floating"
+          formControlName="latitude"
+        ></ion-input>
+        <ion-input
+          [readonly]="true"
+          type="number"
+          label="Longitud"
+          labelPlacement="floating"
+          formControlName="longitude"
+        ></ion-input>
+      </ion-item>
+      <!-- treesInTheBlock -->
+      <ion-item *ngIf="projectType">
+        <ion-input
+          type="number"
+          label="Cantidad de árboles en la manzana"
+          labelPlacement="floating"
+          errorText="Invalid"
+          formControlName="treesInTheBlock"
+        ></ion-input>
+      </ion-item>
+      <ion-card-header class="sub-title green">
+        <ion-card-title class="text-color">
+          Características del árbol
+        </ion-card-title>
+      </ion-card-header>
+      <!-- isMissing -->
+      <ion-item *ngIf="!treeForm.get('isDead')?.value">
+        <ion-label>¿Es árbol faltante?</ion-label>
+        <ion-checkbox formControlName="isMissing"></ion-checkbox>
+      </ion-item>
+      <!-- isDead -->
+      <ion-item *ngIf="!treeForm.get('isMissing')?.value">
+        <ion-label>¿Está muerto?</ion-label>
+        <ion-checkbox formControlName="isDead"></ion-checkbox>
+      </ion-item>
+      <!-- treeTypeName -->
+      <div
+        *ngIf="
+          !treeForm.get('isMissing')?.value && !treeForm.get('isDead')?.value
+        "
+      >
+        <ion-item>
+          <ion-label position="floating">Tipo de árbol</ion-label>
+          <ion-select formControlName="treeTypeName">
+            <ion-select-option
+              *ngFor="let option of treeTypeOptions"
+              [value]="option"
+              >{{ option }}</ion-select-option
+            >
+          </ion-select>
+        </ion-item>
+        <!-- perimeter -->
+        <ion-item lines="none">
+          <ion-input
+            type="number"
+            label="Perímetro"
+            labelPlacement="floating"
+            errorText="Invalid"
+            formControlName="perimeter"
+          ></ion-input>
+        </ion-item>
+        <!-- incline -->
+        <!-- <div>
+          <p>{{tiltValues.x}}</p>
+          <p>{{tiltValues.y}}</p>
+          <p>{{tiltValues.z}}</p>
+         </div> -->
+        <ion-item lines="none">
+          <tilt-measure (tiltChange)="onTiltChange($event)"></tilt-measure>
+          <ion-input
+            type="number"
+            label="Inclinación(ángulo en grados)"
+            labelPlacement="floating"
+            errorText="Invalid"
+            formControlName="incline"
+          ></ion-input>
+        </ion-item>
+        <!-- height -->
+        <ion-item lines="none">
+          <ion-input
+            type="number"
+            label="Altura"
+            labelPlacement="floating"
+            errorText="Invalid"
+            formControlName="height"
+          ></ion-input>
+        </ion-item>
+        <!-- treeValue -->
+        <ion-item>
+          <ion-label position="floating">Valor del árbol</ion-label>
+          <ion-select formControlName="treeValue">
+            <ion-select-option
+              *ngFor="let option of treeValueOptions"
+              [value]="option"
+            >
+              {{ option }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+        <!-- Pests Section -->
+        <div formArrayName="pestsNames" class="manyToMany">
+          <div *ngFor="let pest of pestsNames.controls; let i = index">
+            <ion-item>
+              <ion-select [formControlName]="i">
+                <ion-select-option
+                  *ngFor="let option of pestOptions"
+                  [value]="option"
+                >
+                  {{ option }}
+                </ion-select-option>
+              </ion-select>
+              <ion-button color="secondary" (click)="removeItem(i, 'pests')">
+                <ion-icon name="trash"></ion-icon>
+              </ion-button>
+            </ion-item>
+          </div>
+          <ion-button
+            class="manyToManyButton"
+            (click)="addItem('pests')"
+            expand="block"
+            color="secondary"
+            >Agregar plaga</ion-button
+          >
+        </div>
+        <!-- Diseases Section -->
+        <div formArrayName="diseasesNames" class="manyToMany">
+          <div *ngFor="let disease of diseasesNames.controls; let i = index">
+            <ion-item>
+              <ion-select [formControlName]="i">
+                <ion-select-option
+                  *ngFor="let option of diseaseOptions"
+                  [value]="option"
+                >
+                  {{ option }}
+                </ion-select-option>
+              </ion-select>
+              <ion-button (click)="removeItem(i, 'diseases')" color="secondary">
+                <ion-icon name="trash"></ion-icon>
+              </ion-button>
+            </ion-item>
+          </div>
+          <ion-button
+            class="manyToManyButton"
+            (click)="addItem('diseases')"
+            expand="block"
+            color="secondary"
+            >Agregar enfermedad</ion-button
+          >
+        </div>
+
+        <ion-card-header class="sub-title yellow">
+          <ion-card-title class="text-color">
+            Factores de carga
+          </ion-card-title>
+        </ion-card-header>
+        <!-- Wind Exposure -->
+        <ion-item>
+          <ion-label position="floating">Exposición al viento</ion-label>
+          <ion-select formControlName="windExposure">
+            <ion-select-option
+              *ngFor="let option of windExposureOptions"
+              [value]="option"
+            >
+              {{ option }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+        <!-- Vigor -->
+        <ion-item>
+          <ion-label position="floating">Vigor</ion-label>
+          <ion-select formControlName="vigor">
+            <ion-select-option
+              *ngFor="let option of vigorOptions"
+              [value]="option"
+            >
+              {{ option }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+        <!-- Canopy Density -->
+        <ion-item>
+          <ion-label position="floating">Densidad de copa</ion-label>
+          <ion-select formControlName="canopyDensity">
+            <ion-select-option
+              *ngFor="let option of canopyDensityOptions"
+              [value]="option"
+            >
+              {{ option }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+        <ion-card-header class="sub-title violet">
+          <ion-card-title class="text-color">
+            Condiciones del sitio
+          </ion-card-title>
+        </ion-card-header>
+        <!-- Growth Space -->
+        <ion-item>
+          <ion-label position="floating">Espacio de crecimiento</ion-label>
+          <ion-select formControlName="growthSpace">
+            <ion-select-option
+              *ngFor="let option of growthSpaceOptions"
+              [value]="option"
+            >
+              {{ option }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+        <!-- exposedRoots -->
+        <ion-item>
+          <ion-label
+            >¿Plato radicular levantado, rajado o raíces expuestas?</ion-label
+          >
+          <ion-checkbox formControlName="exposedRoots"></ion-checkbox>
+        </ion-item>
+        <!-- Conflict Section -->
+        <div formArrayName="conflictsNames" class="manyToMany">
+          <div *ngFor="let conflict of conflictsNames.controls; let i = index">
+            <ion-item>
+              <ion-select [formControlName]="i">
+                <ion-select-option
+                  *ngFor="let option of conflictOptions"
+                  [value]="option"
+                  >{{ option }}</ion-select-option
+                >
+              </ion-select>
+              <ion-button
+                color="secondary"
+                (click)="removeItem(i, 'conflicts')"
+              >
+                <ion-icon name="trash"></ion-icon>
+              </ion-button>
+            </ion-item>
+          </div>
+          <ion-button
+            class="manyToManyButton"
+            (click)="addItem('conflicts')"
+            expand="block"
+            color="secondary"
+            >Agregar conflicto</ion-button
+          >
+        </div>
+        <ion-card-header class="sub-title red">
+          <ion-card-title class="text-color">
+            Blanco debajo del árbol
+          </ion-card-title>
+        </ion-card-header>
+        <!-- useUnderTheTree -->
+        <ion-item lines="none">
+          <ion-input
+            label="¿Qué hay bajo el árbol?(blanco)"
+            labelPlacement="floating"
+            errorText="Invalid"
+            formControlName="useUnderTheTree"
+          ></ion-input>
+        </ion-item>
+        <!-- frequencyUse -->
+        <ion-item>
+          <ion-label position="floating"
+            >¿Con qué Frecuencia se encuentra?</ion-label
+          >
+          <ion-select formControlName="frequencyUse">
+            <ion-select-option
+              *ngFor="let option of frequencyUseOptions; let i = index"
+              [value]="i + 1"
+            >
+              {{ option }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+        <!-- isMovable -->
+        <ion-item>
+          <ion-label>¿Se puede Mover el blanco bajo del árbol?</ion-label>
+          <ion-checkbox formControlName="isMovable"></ion-checkbox>
+        </ion-item>
+        <!-- isRestrictable -->
+        <ion-item>
+          <ion-label class="ion-text-center"
+            >¿Se puede Restringir el blanco bajo del árbol?</ion-label
+          >
+          <ion-checkbox formControlName="isRestrictable"></ion-checkbox>
+        </ion-item>
+        <!-- potentialDamage -->
+        <ion-item>
+          <ion-label position="floating"
+            >Potencial de daño del árbol o rama si se cae</ion-label
+          >
+          <ion-select formControlName="potentialDamage">
+            <ion-select-option
+              *ngFor="let option of potentialDamageOptions; let i = index"
+              [value]="i + 1"
+            >
+              {{ option }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+        <!-- Defects Section -->
+        <!-- Cuerpos fructíferos de hongos en cuello o raíces -->
+        <ion-card-header class="sub-title orange">
+          <ion-card-title class="text-color">
+            Defectos en las raíces
+          </ion-card-title>
+        </ion-card-header>
+        <ion-item>
+          <ion-label position="floating"
+            >Cuerpos fructíferos de hongos en cuello o raíces</ion-label
+          >
+          <ion-select formControlName="fruitingBodiesOfFungiOnNeckOrRoots">
+            <ion-select-option
+              *ngFor="let keyValue of fruitingBodiesOfFungiOnNeckOrRootsEntries"
+              [value]="keyValue[0]"
+            >
+              {{ keyValue[1] }}
+            </ion-select-option>
+            <ion-select-option [value]="null"
+              >sin cuerpos fructíferos</ion-select-option
+            >
+          </ion-select>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="floating">Daño mecánico a raíces</ion-label>
+          <ion-select formControlName="mechanicalDamageToRoots">
+            <ion-select-option
+              *ngFor="let keyValue of mechanicalDamageToRootsEntries"
+              [value]="keyValue[0]"
+            >
+              {{ keyValue[1] }}
+            </ion-select-option>
+            <ion-select-option [value]="null">sin daños</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="floating">Raíces estrangulantes</ion-label>
+          <ion-select formControlName="stranglingRoots">
+            <ion-select-option
+              *ngFor="let keyValue of stranglingRootsEntries"
+              [value]="keyValue[0]"
+            >
+              {{ keyValue[1] }}
+            </ion-select-option>
+            <ion-select-option [value]="null"
+              >sin raíces extrangulantes</ion-select-option
+            >
+          </ion-select>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="floating">Raíces muertas</ion-label>
+          <ion-select formControlName="deadRoots">
+            <ion-select-option
+              *ngFor="let keyValue of deadRootsEntries"
+              [value]="keyValue[0]"
+            >
+              {{ keyValue[1] }}
+            </ion-select-option>
+            <ion-select-option [value]="null"
+              >sin raíces muertas</ion-select-option
+            >
+          </ion-select>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="floating"
+            >Síntomas de enfermedad radicular en copa</ion-label
+          >
+          <ion-select formControlName="symptomsDiseaseOfRootsInCrown">
+            <ion-select-option
+              *ngFor="let keyValue of symptomsDiseaseOfRootsInCrownEntries"
+              [value]="keyValue[0]"
+            >
+              {{ keyValue[1] }}
+            </ion-select-option>
+            <ion-select-option [value]="null">sin síntomas</ion-select-option>
+          </ion-select>
+        </ion-item>
+        <ion-card-header class="sub-title orange">
+          <ion-card-title class="text-color">
+            Defectos en tronco y cuello
+          </ion-card-title>
+        </ion-card-header>
+        <ion-item>
+          <ion-label position="floating"
+            >Agallas, termiteros, hormigueros</ion-label
+          >
+          <ion-select formControlName="gallsTermiteMoundsAnthills">
+            <ion-select-option
+              *ngFor="let keyValue of gallsTermiteMoundsAnthillsEntries"
+              [value]="keyValue[0]"
+            >
+              {{ keyValue[1] }}
+            </ion-select-option>
+            <ion-select-option [value]="null">no se observa</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="floating">Cancros de tronco o cuello</ion-label>
+          <ion-select formControlName="cankersTrunk">
+            <ion-select-option
+              *ngFor="let keyValue of cankersTrunkEntries"
+              [value]="keyValue[0]"
+            >
+              {{ keyValue[1] }}
+            </ion-select-option>
+            <ion-select-option [value]="null">sin cancro</ion-select-option>
+          </ion-select>
+        </ion-item>
+        <ion-item>
+          <ion-label>¿Tiene cavidades en el tronco?</ion-label>
+          <ion-checkbox
+            class="check"
+            formControlName="isCavitiesTrunk"
+          ></ion-checkbox>
+          <div *ngIf="treeForm.get('isCavitiesTrunk')?.value">
+            <ion-input
+              label="Ingrese valor de t"
+              type="number"
+              labelPlacement="floating"
+              errorText="Invalid"
+              formControlName="cavitiesTrunk_t"
+            ></ion-input>
+            <ion-note
+              *ngIf="this.treeForm.get('cavitiesTrunk_t')?.value === null"
+              color="warning"
+            >
+              Advertencia: Si no ingresa el valor de t, este defecto no se
+              tendrá en cuenta.
+            </ion-note>
+          </div>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="floating">Cancros de tronco o cuello</ion-label>
+          <ion-select formControlName="cankersTrunk">
+            <ion-select-option
+              *ngFor="let keyValue of cankersTrunkEntries"
+              [value]="keyValue[0]"
+            >
+              {{ keyValue[1] }}
+            </ion-select-option>
+            <ion-select-option [value]="null">sin cancro</ion-select-option>
+          </ion-select>
+        </ion-item>
+        <ion-item>
+          <ion-label>¿Hay corteza pérdida o muerta en el tronco?</ion-label>
+          <ion-checkbox
+            class="check"
+            formControlName="isLostOrDeadBark"
+          ></ion-checkbox>
+          <div *ngIf="treeForm.get('isLostOrDeadBark')?.value">
+            <ion-input
+              label="Ingrese el ancho afectado"
+              type="number"
+              labelPlacement="floating"
+              errorText="Invalid"
+              formControlName="lostOrDeadBark_width"
+            ></ion-input>
+            <ion-note
+              *ngIf="this.treeForm.get('lostOrDeadBark_width')?.value === null"
+              color="warning"
+            >
+              Advertencia: Si no ingresa el ancho afectado, este defecto no se
+              tendrá en cuenta.
+            </ion-note>
+          </div>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="floating">Fustes múltiples</ion-label>
+          <ion-select formControlName="multipleTrunks">
+            <ion-select-option
+              *ngFor="let keyValue of multipleTrunksEntries"
+              [value]="keyValue[0]"
+            >
+              {{ keyValue[1] }}
+            </ion-select-option>
+            <ion-select-option [value]="null">no</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-item>
+          <ion-label
+            >¿Hay heridas en el tronco(no leves o superficiales)?</ion-label
+          >
+          <ion-checkbox class="check" formControlName="isWounds"></ion-checkbox>
+          <div *ngIf="treeForm.get('isWounds')?.value">
+            <ion-input
+              label="Ingrese el ancho afectado"
+              type="number"
+              labelPlacement="floating"
+              errorText="Invalid"
+              formControlName="wounds_width"
+            ></ion-input>
+            <ion-note
+              *ngIf="this.treeForm.get('wounds_width')?.value === null"
+              color="warning"
+            >
+              Advertencia: Si no ingresa el ancho afectado, este defecto no se
+              tendrá en cuenta.
+            </ion-note>
+          </div>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="floating">Horqueta de tronco</ion-label>
+          <ion-select formControlName="forkTrunk">
+            <ion-select-option
+              *ngFor="let keyValue of forkTrunkEntries"
+              [value]="keyValue[0]"
+            >
+              {{ keyValue[1] }}
+            </ion-select-option>
+            <ion-select-option [value]="null">sin horqueta</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-item>
+          <ion-label>¿Hay pudrición de madera?</ion-label>
+          <ion-checkbox
+            class="check"
+            formControlName="isWoodRoot"
+          ></ion-checkbox>
+          <div *ngIf="this.treeForm.get('isWoodRoot')?.value">
+            <ion-label>¿Es con presencia de cuerpos fructiferos?</ion-label>
+            <ion-checkbox
+              class="check"
+              formControlName="isWoodRoot_fruitingBodies"
+            ></ion-checkbox>
+
+            <div *ngIf="!treeForm.get('isWoodRoot_fruitingBodies')?.value">
+              <ion-input
+                label="Ingrese el valor de t"
+                type="number"
+                labelPlacement="floating"
+                errorText="Invalid"
+                formControlName="woodRoot_t"
+              ></ion-input>
+              <ion-note
+                *ngIf="this.treeForm.get('woodRoot_t')?.value === null"
+                color="warning"
+              >
+                Advertencia: Ingrese el valor de t si no hay presencia de CF. Si
+                no lo ingresa, este defecto no se tendrá en cuenta.
+              </ion-note>
+            </div>
+          </div>
+        </ion-item>
+
+        <ion-card-header class="sub-title orange">
+          <ion-card-title class="text-color">
+            Defectos en ramas estructurales y ramas menores
+          </ion-card-title>
+        </ion-card-header>
+        <ion-item>
+          <ion-label position="floating">Cancros de ramas</ion-label>
+          <ion-select formControlName="cankersBranch">
+            <ion-select-option
+              *ngFor="let keyValue of cankersBranchEntries"
+              [value]="keyValue[0]"
+            >
+              {{ keyValue[1] }}
+            </ion-select-option>
+            <ion-select-option [value]="null">sin cancro</ion-select-option>
+          </ion-select>
+        </ion-item>
+        <ion-item>
+          <ion-label position="floating">Cavidades</ion-label>
+          <ion-select formControlName="cavitiesBranches">
+            <ion-select-option
+              *ngFor="let keyValue of cavitiesBranchesEntries"
+              [value]="keyValue[0]"
+            >
+              {{ keyValue[1] }}
+            </ion-select-option>
+            <ion-select-option [value]="null">sin cavidades</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="floating"
+            >Cuerpos fructíferos de hongos</ion-label
+          >
+          <ion-select formControlName="fruitingBodiesOfFungi">
+            <ion-select-option
+              *ngFor="let keyValue of fruitingBodiesOfFungiEntries"
+              [value]="keyValue[0]"
+            >
+              {{ keyValue[1] }}
+            </ion-select-option>
+            <ion-select-option [value]="null"
+              >sin cuerpos fructíferos</ion-select-option
+            >
+          </ion-select>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="floating">Horqueta de ramas</ion-label>
+          <ion-select formControlName="forkBranch">
+            <ion-select-option
+              *ngFor="let keyValue of forkBranchEntries"
+              [value]="keyValue[0]"
+            >
+              {{ keyValue[1] }}
+            </ion-select-option>
+            <ion-select-option [value]="null">sin horqueta</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="floating">Ramas colgantes o quebradas</ion-label>
+          <ion-select
+            formControlName="hangingOrBrokenBranches"
+            (ionChange)="showBranchesInput($event, 'hangingOrBrokenBranches')"
+          >
+            <ion-select-option
+              *ngFor="let keyValue of hangingOrBrokenBranchesEntries"
+              [value]="keyValue[0]"
+            >
+              {{ keyValue[1] }}
+            </ion-select-option>
+            <ion-select-option [value]="null"
+              >sin ramas quebradas/colgantes</ion-select-option
+            >
+          </ion-select>
+          <div *ngIf="hangingOrBrokenBranches_branches">
+            <ion-input
+              label="Número de ramas colgantes o quebradas"
+              type="number"
+              labelPlacement="floating"
+              errorText="Invalid"
+              formControlName="hangingOrBrokenBranches_branches"
+            ></ion-input>
+          </div>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="floating">Ramas muertas</ion-label>
+          <ion-select
+            formControlName="deadBranches"
+            (ionChange)="showBranchesInput($event, 'deadBranches')"
+          >
+            <ion-select-option
+              *ngFor="let keyValue of deadBranchesEntries"
+              [value]="keyValue[0]"
+            >
+              {{ keyValue[1] }}
+            </ion-select-option>
+            <ion-select-option [value]="null"
+              >sin ramas muertas</ion-select-option
+            >
+          </ion-select>
+          <div *ngIf="deadBranches_branches">
+            <ion-input
+              label="Número de ramas muertas"
+              type="number"
+              labelPlacement="floating"
+              errorText="Invalid"
+              formControlName="deadBranches_branches"
+            ></ion-input>
+          </div>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="floating">Ramas sobre extendidas</ion-label>
+          <ion-select
+            formControlName="overExtendedBranches"
+            (ionChange)="showBranchesInput($event, 'overExtendedBranches')"
+          >
+            <ion-select-option
+              *ngFor="let keyValue of overExtendedBranchesEntries"
+              [value]="keyValue[0]"
+            >
+              {{ keyValue[1] }}
+            </ion-select-option>
+            <ion-select-option [value]="null"
+              >sin ramas sobreextendidas</ion-select-option
+            >
+          </ion-select>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="floating">Rajaduras</ion-label>
+          <ion-select formControlName="fissures">
+            <ion-select-option
+              *ngFor="let keyValue of fissuresEntries"
+              [value]="keyValue[0]"
+            >
+              {{ keyValue[1] }}
+            </ion-select-option>
+            <ion-select-option [value]="null">sin rajaduras</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="floating">Pudrición de madera</ion-label>
+          <ion-select formControlName="woodRot">
+            <ion-select-option
+              *ngFor="let keyValue of woodRotEntries"
+              [value]="keyValue[0]"
+            >
+              {{ keyValue[1] }}
+            </ion-select-option>
+            <ion-select-option [value]="null"
+              >ramas estructurales sin pudrición</ion-select-option
+            >
+          </ion-select>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="floating"
+            >Interferencia con red eléctrica</ion-label
+          >
+          <ion-select formControlName="interferenceWithTheElectricalGrid">
+            <ion-select-option
+              *ngFor="let keyValue of interferenceWithTheElectricalGridEntries"
+              [value]="keyValue[0]"
+            >
+              {{ keyValue[1] }}
+            </ion-select-option>
+            <ion-select-option [value]="null"
+              >sin interferencia con red eléctrica</ion-select-option
+            >
+          </ion-select>
+        </ion-item>
+      </div>
+      <!-- Intervention Section -->
+      <ion-card-header class="sub-title gray">
+        <ion-card-title class="text-color">
+          Mitigación del riesgo/acciones correctivas
+        </ion-card-title>
+      </ion-card-header>
+      <div
+        formArrayName="interventionsNames"
+        class="manyToMany"
+        *ngIf="
+          !treeForm.get('isMissing')?.value && !treeForm.get('isDead')?.value
+        "
+      >
+        <div
+          *ngFor="
+            let intervention of interventionsNames.controls;
+            let i = index
+          "
+        >
+          <ion-item>
+            <ion-select [formControlName]="i">
+              <ion-select-option
+                *ngFor="let option of interventionOptions"
+                [value]="option"
+                >{{ option }}</ion-select-option
+              >
+            </ion-select>
+            <ion-button
+              color="secondary"
+              (click)="removeItem(i, 'interventions')"
+            >
+              <ion-icon name="trash"></ion-icon>
+            </ion-button>
+          </ion-item>
+        </div>
+        <ion-button
+          class="manyToManyButton"
+          (click)="addItem('interventions')"
+          expand="block"
+          color="secondary"
+          >Agregar intervención</ion-button
+        >
+      </div>
+      <ion-item
+        *ngIf="
+          treeForm.get('isMissing')?.value || treeForm.get('isDead')?.value
+        "
+      >
+        {{
+          treeForm.get("isMissing")?.value
+            ? "plantacion de arbol faltante"
+            : "extraccion del arbol"
+        }}
+      </ion-item>
+      <ion-text color="danger" *ngIf="treeForm.invalid && treeForm.touched">
+        <p>Complete todos los campos obligatorios por favor</p>
+      </ion-text>
+      <ion-card>
+        <ion-button expand="full" type="submit">{{
+          idTree ? "Actualizar árbol ID: " + idTree : "Registrar árbol"
+        }}</ion-button>
+      </ion-card>
+    </form>
+  </ion-card>
+</ion-content>
