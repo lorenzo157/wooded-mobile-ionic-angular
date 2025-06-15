@@ -80,7 +80,7 @@ export class TiltMeasureComponent {
     if (magnitude === 0) {
       this.angle = 0;
     } else {
-      const tiltAngleRadians = Math.acos(y / magnitude);
+      const tiltAngleRadians = Math.acos(x / magnitude);
       this.angle = (tiltAngleRadians * 180) / Math.PI; // Convert to degrees
     }
   }

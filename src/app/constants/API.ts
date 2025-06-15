@@ -4,9 +4,9 @@ import { NumberToStringMap } from '../tree/tree.service';
 export const API = 'http://localhost:3000';
 
 export const windExposureOptions: string[] = [
-  'expuesto',
-  'parcialmente expuesto',
   'protegido',
+  'parcialmente expuesto',
+  'expuesto',
   'tunel de viento',
 ];
 
@@ -31,7 +31,7 @@ export const frequencyUseOptions: string[] = [
   'ocasional',
   'frecuente',
 ];
-export const potentialDamageOptions: string[] = ['menor', 'moderado', 'alto'];
+export const potentialDamageOptions: string[] = ['Diametro de la parte < 10cm', 'Diametro de la parte entre 10-45cm', 'Diametro de la parte > 45cm'];
 export const treeTypeOptions: string[] = [
   'Manzano',
   'Peral',
@@ -49,28 +49,6 @@ export const conflictOptions: string[] = [
   'rotura de veredas',
   'luminarias a menos de 3m',
   'rotura de desagues',
-];
-export const pestOptions: string[] = [
-  'pest1 example',
-  'pest2 example',
-  'pest3 example',
-  'pest4 example',
-  'pest5 example',
-  'pest6 example',
-  'pest7 example',
-  'pest8 example',
-  'pest9 example',
-];
-export const diseaseOptions: string[] = [
-  'disease1 example',
-  'disease2 example',
-  'disease3 example',
-  'disease4 example',
-  'disease5 example',
-  'disease6 example',
-  'disease7 example',
-  'disease8 example',
-  'disease9 example',
 ];
 export const interventionOptions: string[] = [
   'extraccion del arbol',
@@ -164,6 +142,11 @@ export const wounds: NumberToStringMap = {
   3: 'afecta < 50% del perímetro con pudrición',
   4: 'afecta > 50% del perímetro con pudrición o cuerpo fructífero',
 };
+export const fissuresTrunk: NumberToStringMap = {
+  2: 'rajadura pequeña y poco profunda/rajadura sellada',
+  3: 'rajaduras no estructurales sin movimiento de las partes',
+  4: 'el tronco esta dividido en 2 por una rajadura (movimiento independiente de las partes)',
+};
 // DEFECTOS EN RAMAS ESTRUCTURASLES Y RAMAS MENORES
 export const cankersBranch: NumberToStringMap = {
   2: 'ramas con diametro < 10 cm afecta < 50% perimetro',
@@ -194,7 +177,7 @@ export const overExtendedBranches: NumberToStringMap = {
   3: 'ramas sobreextendidas sin chupones verticales',
   4: 'ramas sobre extendidas con chupones verticales pesados',
 };
-export const fissures: NumberToStringMap = {
+export const fissuresBranches: NumberToStringMap = {
   2: 'rajaduras pequeñas y poco profundas',
   3: 'rajaduras longitudinales sin movimiento',
   4: 'rajaduras longitudinales profundas  o rajaduras transversaleso',

@@ -14,3 +14,18 @@ ion-checkbox {
 .manyToManyButton {
   margin: 2% 18%;
 }
+
+.manyToMany ion-select {
+  min-width: 0;
+}
+
+.defect-label {
+  font-weight: bold;
+  padding-right: 8px;
+  min-width: 80px;
+  display: inline-block;
+}
+.defect-value {
+  padding-left: 7px;
+  color: #333;
+}

@@ -17,9 +17,7 @@ import {
   potentialDamageOptions,
   treeTypeOptions,
   conflictOptions,
-  diseaseOptions,
   interventionOptions,
-  pestOptions,
   fruitingBodiesOfFungiOnNeckOrRoots,
   mechanicalDamageToRoots,
   stranglingRoots,
@@ -35,6 +33,7 @@ import {
   inclination,
   woodRotTrunk,
   wounds,
+  fissuresTrunk,
   cankersBranch,
   cavitiesBranches,
   fruitingBodiesOfFungi,
@@ -42,7 +41,7 @@ import {
   hangingOrBrokenBranches,
   deadBranches,
   overExtendedBranches,
-  fissures,
+  fissuresBranches,
   woodRot,
   interferenceWithTheElectricalGrid,
 } from '../../constants/API';
@@ -63,9 +62,7 @@ export class CreateTreeComponent implements OnInit {
   potentialDamageOptions = potentialDamageOptions;
   treeTypeOptions = treeTypeOptions;
   conflictOptions = conflictOptions;
-  diseaseOptions = diseaseOptions;
   interventionOptions = interventionOptions;
-  pestOptions = pestOptions;
   // DEFECTOS EN LAS RAICES
   fruitingBodiesOfFungiOnNeckOrRootsEntries = Object.entries(
     fruitingBodiesOfFungiOnNeckOrRoots,
@@ -83,6 +80,7 @@ export class CreateTreeComponent implements OnInit {
   cankersTrunkEntries = Object.entries(cankersTrunk);
   multipleTrunksEntries = Object.entries(multipleTrunks);
   forkTrunkEntries = Object.entries(forkTrunk);
+  fissuresTrunkEntries = Object.entries(fissuresTrunk);
   // DEFECTOS EN RAMAS ESTRUCTURASLES Y RAMAS MENORES
   cankersBranchEntries = Object.entries(cankersBranch);
   cavitiesBranchesEntries = Object.entries(cavitiesBranches);
@@ -91,7 +89,7 @@ export class CreateTreeComponent implements OnInit {
   hangingOrBrokenBranchesEntries = Object.entries(hangingOrBrokenBranches);
   deadBranchesEntries = Object.entries(deadBranches);
   overExtendedBranchesEntries = Object.entries(overExtendedBranches);
-  fissuresEntries = Object.entries(fissures);
+  fissuresBranchesEntries = Object.entries(fissuresBranches);
   woodRotEntries = Object.entries(woodRot);
   interferenceWithTheElectricalGridEntries = Object.entries(
     interferenceWithTheElectricalGrid,
@@ -131,6 +129,7 @@ export class CreateTreeComponent implements OnInit {
       useUnderTheTree: [null, Validators.required],
       frequencyUse: [null, Validators.required],
       potentialDamage: [null, Validators.required],
+      nothingUnderTree : [false],
       isMovable: [false],
       isRestrictable: [false],
       isMissing: [false],
@@ -145,9 +144,9 @@ export class CreateTreeComponent implements OnInit {
       latitude: [null, Validators.required],
       longitude: [null, Validators.required],
       treeTypeName: [null, Validators.required],
-      conflictsNames: this.fb.array([]),
+      conflictsNames: [[]],
       diseasesNames: this.fb.array([]),
-      interventionsNames: this.fb.array([]),
+      interventionsNames: [[]],
       pestsNames: this.fb.array([]),
       fruitingBodiesOfFungiOnNeckOrRoots: [null],
       mechanicalDamageToRoots: [null],
@@ -167,6 +166,7 @@ export class CreateTreeComponent implements OnInit {
       isWoodRoot: [false],
       isWoodRoot_fruitingBodies: [false],
       woodRoot_t: [null],
+      fissuresTrunk: [null],
       cankersBranch: [null],
       cavitiesBranches: [null],
       fruitingBodiesOfFungi: [null],
@@ -176,7 +176,7 @@ export class CreateTreeComponent implements OnInit {
       deadBranches: [null],
       deadBranches_branches: [null],
       overExtendedBranches: [null],
-      fissures: [null],
+      fissuresBranches: [null],
       woodRot: [null],
       interferenceWithTheElectricalGrid: [null],
     });
@@ -201,6 +201,19 @@ export class CreateTreeComponent implements OnInit {
   addConditionalValidation() {
     const isMissingControl = this.treeForm.get('isMissing');
     const isDeadControl = this.treeForm.get('isDead');
+    const nothingUnderTree = this.treeForm.get('nothingUnderTree');
+
+    nothingUnderTree?.valueChanges.subscribe((value) => {
+      if (value) {
+        this.treeForm.get('useUnderTheTree')?.setValidators([Validators.required]);
+        this.treeForm.get('frequencyUse')?.setValidators([Validators.required]);
+      } else {
+        this.treeForm.get('useUnderTheTree')?.clearValidators();
+        this.treeForm.get('frequencyUse')?.clearValidators();
+      }
+      this.treeForm.get('useUnderTheTree')?.updateValueAndValidity();
+      this.treeForm.get('frequencyUse')?.updateValueAndValidity();
+    });
     // Listen  to changes on isMissing and isMovable
     isMissingControl?.valueChanges.subscribe((isMissing) => {
       this.updateConditionalValidators(isMissing || isDeadControl?.value);
@@ -211,7 +224,7 @@ export class CreateTreeComponent implements OnInit {
     });
 
     this.treeForm.get('perimeter')?.valueChanges.subscribe((perimeterValue) => {
-      if (perimeterValue != null) this.dch = perimeterValue / Math.PI;
+      if (perimeterValue) this.dch = perimeterValue / Math.PI;
     });
     this.treeForm.get('isWoodRoot')?.valueChanges.subscribe((isWoodRoot) => {
       if (!isWoodRoot)
@@ -345,7 +358,7 @@ export class CreateTreeComponent implements OnInit {
   }
 
   async onSubmit() {
-    console.log(this.operation);
+    console.log(this.treeForm.get('interventionsNames')?.value,'intevenciones');
     if (this.treeForm.valid) {
       console.log('is validoooo');
       await this.uiService.alert(
@@ -387,7 +400,7 @@ export class CreateTreeComponent implements OnInit {
     } else {
       newTree.risk = 0;
       newTree.perimeter = this.treeForm.get('perimeter')?.value;
-      newTree.dch = this.dch ? this.dch : null;
+      newTree.dch = this.dch ?? null;
       newTree.height = this.treeForm.get('height')?.value;
       newTree.incline = this.treeForm.get('incline')?.value;
       newTree.useUnderTheTree = this.treeForm.get('useUnderTheTree')?.value;
@@ -467,6 +480,11 @@ export class CreateTreeComponent implements OnInit {
         forkTrunk,
       );
       addDefect(
+        'rajaduras de tronco',
+        this.treeForm.get('fissuresTrunk')?.value,
+        fissuresTrunk,
+      );
+      addDefect(
         'cancros de rama',
         this.treeForm.get('cankersBranch')?.value,
         cankersBranch,
@@ -505,8 +523,8 @@ export class CreateTreeComponent implements OnInit {
       );
       addDefect(
         'rajaduras de rama',
-        this.treeForm.get('fissures')?.value,
-        fissures,
+        this.treeForm.get('fissuresBranches')?.value,
+        fissuresBranches,
       );
       addDefect(
         'pudricion de madera en ramas',
@@ -595,7 +613,7 @@ export class CreateTreeComponent implements OnInit {
         if (this.treeForm.get('isWoodRoot_fruitingBodies')?.value)
           defectValue = 4;
         else if (t && newTree.perimeter && slendernessCoefficent_number) {
-          const tr = t / (newTree.perimeter / 2 / Math.PI);
+          const tr = t / (newTree.perimeter / (2 * Math.PI));  // t/R
           if (tr < 0.15 && slendernessCoefficent_number > 60) defectValue = 3;
           else if (tr < 0.2 && slendernessCoefficent_number > 60)
             defectValue = 2;
@@ -625,7 +643,7 @@ export class CreateTreeComponent implements OnInit {
       console.log(newTree.risk, '  risk');
 
       newTree.createDefectDto = newTree.createDefectDto.filter(
-        (createDefectDto) => createDefectDto.defectValue > 2,
+        (createDefectDto) => createDefectDto.defectValue > 1,
       );
     } // end if
 
@@ -646,5 +664,148 @@ export class CreateTreeComponent implements OnInit {
       },
       error: () => this.uiService.alert(this.operation + ' fallida', 'Error'),
     });
+  }
+
+  get selectedDefectsSummary(): { label: string; value: string }[] {
+    const summary: { label: string; value: string }[] = [];
+
+    const defectFields = [
+      {
+        control: 'fruitingBodiesOfFungiOnNeckOrRoots',
+        entries: this.fruitingBodiesOfFungiOnNeckOrRootsEntries,
+        label: 'Cuerpos fructíferos de hongos en cuello o raíces'
+      },
+      {
+        control: 'mechanicalDamageToRoots',
+        entries: this.mechanicalDamageToRootsEntries,
+        label: 'Daño mecánico a raíces'
+      },
+      {
+        control: 'stranglingRoots',
+        entries: this.stranglingRootsEntries,
+        label: 'Raíces estrangulantes'
+      },
+      {
+        control: 'deadRoots',
+        entries: this.deadRootsEntries,
+        label: 'Raíces muertas'
+      },
+      {
+        control: 'symptomsDiseaseOfRootsInCrown',
+        entries: this.symptomsDiseaseOfRootsInCrownEntries,
+        label: 'Síntomas de enfermedad radicular en copa'
+      },
+      {
+        control: 'gallsTermiteMoundsAnthills',
+        entries: this.gallsTermiteMoundsAnthillsEntries,
+        label: 'Agallas, termiteros, hormigueros'
+      },
+      {
+        control: 'cankersTrunk',
+        entries: this.cankersTrunkEntries,
+        label: 'Cancros de tronco o cuello'
+      },
+      {
+        control: 'multipleTrunks',
+        entries: this.multipleTrunksEntries,
+        label: 'Fustes múltiples'
+      },
+      {
+        control: 'forkTrunk',
+        entries: this.forkTrunkEntries,
+        label: 'Horqueta de tronco'
+      },
+      {
+        control: 'fissuresTrunk',
+        entries: this.fissuresTrunkEntries,
+        label: 'Rajaduras de tronco'
+      },
+      {
+        control: 'cankersBranch',
+        entries: this.cankersBranchEntries,
+        label: 'Cancros de ramas'
+      },
+      {
+        control: 'cavitiesBranches',
+        entries: this.cavitiesBranchesEntries,
+        label: 'Cavidades en ramas'
+      },
+      {
+        control: 'fruitingBodiesOfFungi',
+        entries: this.fruitingBodiesOfFungiEntries,
+        label: 'Cuerpos fructíferos de hongos en ramas'
+      },
+      {
+        control: 'forkBranch',
+        entries: this.forkBranchEntries,
+        label: 'Horqueta de ramas'
+      },
+      {
+        control: 'hangingOrBrokenBranches',
+        entries: this.hangingOrBrokenBranchesEntries,
+        label: 'Ramas colgantes o quebradas'
+      },
+      {
+        control: 'deadBranches',
+        entries: this.deadBranchesEntries,
+        label: 'Ramas muertas'
+      },
+      {
+        control: 'overExtendedBranches',
+        entries: this.overExtendedBranchesEntries,
+        label: 'Ramas sobre extendidas'
+      },
+      {
+        control: 'fissuresBranches',
+        entries: this.fissuresBranchesEntries,
+        label: 'Rajaduras'
+      },
+      {
+        control: 'woodRot',
+        entries: this.woodRotEntries,
+        label: 'Pudrición de madera'
+      },
+      {
+        control: 'interferenceWithTheElectricalGrid',
+        entries: this.interferenceWithTheElectricalGridEntries,
+        label: 'Interferencia con red eléctrica'
+      }
+    ];
+
+    for (const field of defectFields) {
+      const value = this.treeForm.get(field.control)?.value;
+      if (value) {
+        const entry = field.entries.find(([key]) => key == value);
+        if (entry) {
+          summary.push({ label: field.label, value: entry[1] });
+        }
+      }
+    }
+
+    // Special cases for checkboxes and inputs
+    if (this.treeForm.get('isCavitiesTrunk')?.value && this.treeForm.get('cavitiesTrunk_t')?.value) {
+      summary.push({ label: 'Cavidades en tronco', value: 't = ' + this.treeForm.get('cavitiesTrunk_t')?.value });
+    }
+    if (this.treeForm.get('isLostOrDeadBark')?.value && this.treeForm.get('lostOrDeadBark_width')?.value) {
+      summary.push({ label: 'Corteza pérdida o muerta', value: 'ancho = ' + this.treeForm.get('lostOrDeadBark_width')?.value });
+    }
+    if (this.treeForm.get('isWounds')?.value && this.treeForm.get('wounds_width')?.value) {
+      summary.push({ label: 'Heridas en el tronco', value: 'ancho = ' + this.treeForm.get('wounds_width')?.value });
+    }
+    if (this.treeForm.get('isWoodRoot')?.value) {
+      if (this.treeForm.get('isWoodRoot_fruitingBodies')?.value) {
+        summary.push({ label: 'Pudrición de madera', value: 'con cuerpos fructíferos' });
+      } else if (this.treeForm.get('woodRoot_t')?.value) {
+        summary.push({ label: 'Pudrición de madera', value: 't = ' + this.treeForm.get('woodRoot_t')?.value });
+      }
+    }
+    if (this.hangingOrBrokenBranches_branches && this.treeForm.get('hangingOrBrokenBranches_branches')?.value) {
+      summary.push({ label: 'Número de ramas colgantes o quebradas', value: this.treeForm.get('hangingOrBrokenBranches_branches')?.value });
+    }
+    if (this.deadBranches_branches && this.treeForm.get('deadBranches_branches')?.value) {
+      summary.push({ label: 'Número de ramas muertas', value: this.treeForm.get('deadBranches_branches')?.value });
+    }
+
+    return summary;
   }
 }

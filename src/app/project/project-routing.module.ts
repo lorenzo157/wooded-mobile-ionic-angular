@@ -8,13 +8,13 @@ const routes: Routes = [
   {
     path: 'listproject',
     component: ListProjectsComponent,
-    canActivate: [AuthGuard],
+    //canActivate: [AuthGuard],
   },
   { path: '', redirectTo: 'listproject', pathMatch: 'full' },
   {
     path: 'detailproject/:idProject',
     component: DetailProjectComponent,
-    canActivate: [AuthGuard],
+    //canActivate: [AuthGuard],
   },
 ];
 
