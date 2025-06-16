@@ -5,65 +5,59 @@
     </ion-toolbar>
   </ion-header>
 
-  <ion-card *ngIf="project">
-    <ion-card-header>
-      <ion-card-title>{{ project.projectName }}</ion-card-title>
-    </ion-card-header>
-
-    <ion-card-content>
-      <ion-item>
-        <ion-label><strong>Descripción:</strong></ion-label>
-        <ion-text>{{ project.projectDescription }}</ion-text>
-      </ion-item>
-
-      <ion-item>
-        <ion-label><strong>Fecha de inicio:</strong></ion-label>
-        <ion-text>{{ project.startDate | date }}</ion-text>
-      </ion-item>
-
-      <ion-item>
-        <ion-label><strong>Fecha de finalización:</strong></ion-label>
-        <ion-text>{{ project.endDate | date }}</ion-text>
-      </ion-item>
-
-      <ion-item>
-        <ion-label><strong>Ciudad:</strong></ion-label>
-        <ion-text>{{ project.cityName }}</ion-text>
-      </ion-item>
-
-      <ion-item>
-        <ion-label><strong>Provincia:</strong></ion-label>
-        <ion-text>{{ project.provinceName }}</ion-text>
-      </ion-item>
-
-      <ion-item>
-        <ion-label><strong>Tipo de proyecto:</strong></ion-label>
-        <ion-text>{{
-          project.projectType ? "Muestreo" : "Individual"
-        }}</ion-text>
-      </ion-item>
-
-      <ion-row class="ion-justify-content-center button-container">
-        <ion-button
-          class="button"
-          expand="block"
-          color="primary"
-          (click)="createTree()"
-        >
-          <ion-icon name="leaf"></ion-icon>
-          <ion-label>Registrar Árbol</ion-label>
-        </ion-button>
-
-        <ion-button
-          class="button"
-          expand="block"
-          color="secondary"
-          (click)="showAllTrees()"
-        >
-          <ion-icon name="leaf-outline"></ion-icon>
-          <ion-label>Ver Árboles del Proyecto</ion-label>
-        </ion-button>
-      </ion-row>
-    </ion-card-content>
-  </ion-card>
+  @if (project) {
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>{{ project.projectName }}</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-item>
+          <ion-label><strong>Descripción:</strong></ion-label>
+          <ion-text>{{ project.projectDescription }}</ion-text>
+        </ion-item>
+        <ion-item>
+          <ion-label><strong>Fecha de inicio:</strong></ion-label>
+          <ion-text>{{ project.startDate | date }}</ion-text>
+        </ion-item>
+        <ion-item>
+          <ion-label><strong>Fecha de finalización:</strong></ion-label>
+          <ion-text>{{ project.endDate | date }}</ion-text>
+        </ion-item>
+        <ion-item>
+          <ion-label><strong>Ciudad:</strong></ion-label>
+          <ion-text>{{ project.cityName }}</ion-text>
+        </ion-item>
+        <ion-item>
+          <ion-label><strong>Provincia:</strong></ion-label>
+          <ion-text>{{ project.provinceName }}</ion-text>
+        </ion-item>
+        <ion-item>
+          <ion-label><strong>Tipo de proyecto:</strong></ion-label>
+          <ion-text>{{
+            project.projectType ? "Muestreo" : "Individual"
+          }}</ion-text>
+        </ion-item>
+        <ion-row class="ion-justify-content-center button-container">
+          <ion-button
+            class="button"
+            expand="block"
+            color="primary"
+            (click)="createTree()"
+            >
+            <ion-icon name="leaf"></ion-icon>
+            <ion-label>Registrar Árbol</ion-label>
+          </ion-button>
+          <ion-button
+            class="button"
+            expand="block"
+            color="secondary"
+            (click)="showAllTrees()"
+            >
+            <ion-icon name="leaf-outline"></ion-icon>
+            <ion-label>Ver Árboles del Proyecto</ion-label>
+          </ion-button>
+        </ion-row>
+      </ion-card-content>
+    </ion-card>
+  }
 </div>

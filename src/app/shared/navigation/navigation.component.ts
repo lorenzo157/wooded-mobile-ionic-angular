@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { CommonModule, Location } from '@angular/common';
+import { Location } from '@angular/common';
 import { AuthService } from '../../auth/auth.service'; // Adjust import as necessary
 import { IonicModule } from '@ionic/angular';
 import { UiService } from 'src/app/utils/ui.service';
@@ -9,7 +9,7 @@ import { Router } from '@angular/router';
   selector: 'app-navigation',
   templateUrl: './navigation.component.html',
   styleUrls: ['./navigation.component.scss'],
-  imports: [CommonModule, IonicModule],
+  imports: [IonicModule],
 })
 export class NavigationComponent {
   constructor(

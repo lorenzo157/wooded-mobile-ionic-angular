@@ -17,40 +17,43 @@
         [(ngModel)]="filterProjectName"
         type="text"
         clearInput
-      >
+        >
       </ion-input>
     </ion-card-header>
-    <ion-list *ngIf="projects.length > 0; else noProjects">
-      <ion-item *ngFor="let project of filteredProjects">
-        <ion-label>
-          <h2>
-            <a (click)="viewProjectDetails(project)" class="linkproyect">
-              <span class="project">{{ project.projectName }}</span>
-            </a>
-          </h2>
-          <p>{{ project.projectDescription }}</p>
-          <p>
-            <strong>Fecha de inicio:</strong> {{ project.startDate | date }}
-          </p>
-          <p>
-            <strong>Fecha de finalización:</strong> {{ project.endDate | date }}
-          </p>
-          <p>
-            <strong>Ubicación:</strong> {{ project.cityName }},
-            {{ project.provinceName }}
-          </p>
-          <p>
-            <strong>Tipo de proyecto:</strong>
-            {{ project.projectType ? "Muestreo" : "Individual" }}
-          </p>
-        </ion-label>
-      </ion-item>
-    </ion-list>
-
-    <ng-template #noProjects>
+    @if (projects.length > 0) {
+      <ion-list>
+        @for (project of filteredProjects; track project) {
+          <ion-item>
+            <ion-label>
+              <h2>
+                <a (click)="viewProjectDetails(project)" class="linkproyect">
+                  <span class="project">{{ project.projectName }}</span>
+                </a>
+              </h2>
+              <p>{{ project.projectDescription }}</p>
+              <p>
+                <strong>Fecha de inicio:</strong> {{ project.startDate | date }}
+              </p>
+              <p>
+                <strong>Fecha de finalización:</strong> {{ project.endDate | date }}
+              </p>
+              <p>
+                <strong>Ubicación:</strong> {{ project.cityName }},
+                {{ project.provinceName }}
+              </p>
+              <p>
+                <strong>Tipo de proyecto:</strong>
+                {{ project.projectType ? "Muestreo" : "Individual" }}
+              </p>
+            </ion-label>
+          </ion-item>
+        }
+      </ion-list>
+    } @else {
       <ion-item>
         <ion-label>Aún no has sido asignado a ningún proyecto</ion-label>
       </ion-item>
-    </ng-template>
+    }
+
   </ion-card>
 </ion-content>
