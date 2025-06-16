@@ -12,6 +12,7 @@ import { App } from '@capacitor/app';
 })
 export class LoginComponent {
   loginForm: FormGroup;
+  showPassword = false;
 
   constructor(
     private fb: FormBuilder,
@@ -42,6 +43,15 @@ export class LoginComponent {
         });
     }
   }
+
+  togglePasswordVisibility() {
+    this.showPassword = !this.showPassword;
+  }
+
+  onForgotPassword() {
+    // Implement your forgot password logic here
+  }
+
   exitApp() {
     App.exitApp(); // Closes the application
   }

@@ -41,8 +41,12 @@
   border-radius: 5px;
 }
 
-.text-color {
+.text-color-white {
   color: white;
+}
+
+.text-color-light-gray {
+  color: #bbb;
 }
 
 /* Subclasses extending .sub-title with specific background gradients */
