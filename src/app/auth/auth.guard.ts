@@ -18,7 +18,7 @@ export class AuthGuard implements CanActivate {
   canActivate(): Observable<boolean | UrlTree> {
     return this.authService.getToken().pipe(
       map((token) => {
-        //return true;
+        
         console.log('guard on, verify if token exist', token ? true : false);
         if (token) {
           if (!this.authService.isTokenExpired(token))

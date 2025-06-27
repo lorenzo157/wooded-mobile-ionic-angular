@@ -27,7 +27,7 @@ export class CreateTreeDto {
   risk?: number | null;
   address!: string;
   conflictsNames?: string[];
-  createDefectDto!: CreateDefectTreeDto[];
+  createDefectsDtos!: CreateDefectTreeDto[];
   diseasesNames?: string[];
   interventionsNames?: string[];
   pestsNames?: string[];

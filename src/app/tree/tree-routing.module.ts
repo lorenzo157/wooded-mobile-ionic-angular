@@ -9,18 +9,18 @@ const routes: Routes = [
   {
     path: ':projectType/listtree',
     component: ListTreesComponent,
-    canActivate: [AuthGuard],
+   // canActivate: [AuthGuard],
   },
   { path: '', redirectTo: 'listtree', pathMatch: 'full' },
   {
     path: ':projectType/detailtree/:idTree',
     component: DetailTreeComponent,
-    canActivate: [AuthGuard],
+    //canActivate: [AuthGuard],
   },
   {
     path: ':projectType/createtree/:idTree',
     component: CreateTreeComponent,
-    canActivate: [AuthGuard],
+   // canActivate: [AuthGuard],
   },
 ];
 

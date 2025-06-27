@@ -5,13 +5,8 @@ import { API } from '../constants/API';
 import { from, map, Observable, tap } from 'rxjs';
 import { StorageService } from '../utils/storage.service';
 import { jwtDecode } from 'jwt-decode';
-
-export interface ApiResponse<T = any> {
-  result: T;
-  statusCode: HttpStatusCode;
-}
 export interface LoginResponse {
-  firstName: string;
+  user: any;
   access_token: string;
 }
 interface DecodedToken {
@@ -28,25 +23,20 @@ export class AuthService {
   constructor(
     private storageService: StorageService,
     private http: HttpClient,
-    private router: Router,
+    private router: Router
   ) {}
 
-  login(
-    email: string,
-    password: string,
-  ): Observable<ApiResponse<LoginResponse>> {
+  login(email: string, password: string): Observable<LoginResponse> {
     return this.http
-      .post<ApiResponse<LoginResponse>>(`${this.API_URL}/login`, {
+      .post<LoginResponse>(`${this.API_URL}/login`, {
         email,
         password,
       })
       .pipe(
         tap((value) => {
-          if (value.statusCode === HttpStatusCode.Ok) {
-            this.storageService.set('auth.token', value.result.access_token);
-            this.storageService.set('auth.user', value.result.firstName);
-          }
-        }),
+          this.storageService.set('auth.token', value.access_token);
+          this.storageService.set('auth.user', value.user.firstName);
+        })
       );
   }
   logout() {
@@ -65,7 +55,7 @@ export class AuthService {
         if (!token) return null; // Handle the case when the token is null
         const decoded = jwtDecode<DecodedToken>(token);
         return decoded.idUser;
-      }),
+      })
     );
   }
   isTokenExpired(token: string): boolean {
