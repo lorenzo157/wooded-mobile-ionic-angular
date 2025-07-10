@@ -32,13 +32,6 @@ export const frequencyUseOptions: string[] = [
   'frecuente',
 ];
 export const potentialDamageOptions: string[] = ['Diametro de la parte < 10cm', 'Diametro de la parte entre 10-45cm', 'Diametro de la parte > 45cm'];
-export const treeTypeOptions: string[] = [
-  'Manzano',
-  'Peral',
-  'Naranjo',
-  'Limonero',
-  'Granado',
-];
 export const conflictOptions: string[] = [
   'obstruccion visual de señaletica vial',
   'obstruccion de visual(transito humano y vehicular)',

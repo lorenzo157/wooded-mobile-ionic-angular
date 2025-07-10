@@ -10,6 +10,7 @@ import { ListTreesComponent } from './list-trees/list-trees.component';
 import { DetailTreeComponent } from './detail-tree/detail-tree.component';
 import { CreateTreeComponent } from './create-tree/create-tree.component';
 import { TiltMeasureComponent } from './create-tree/acelerometer-tilt.component';
+import { HeightMeasureComponent } from './create-tree/acelerometer-height.component';
 
 @NgModule({
   declarations: [ListTreesComponent, CreateTreeComponent, DetailTreeComponent],
@@ -22,6 +23,7 @@ import { TiltMeasureComponent } from './create-tree/acelerometer-tilt.component'
     NavigationComponent,
     ReactiveFormsModule,
     TiltMeasureComponent,
+    HeightMeasureComponent,
   ],
   providers: [TreeService],
 })

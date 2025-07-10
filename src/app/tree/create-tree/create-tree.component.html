@@ -1,4 +1,4 @@
-<ion-header>
+﻿<ion-header>
   <ion-toolbar>
     <app-navigation></app-navigation>
   </ion-toolbar>
@@ -15,7 +15,7 @@
         <ion-card-title class="text-color-white"> Ubicación </ion-card-title>
       </ion-card-header>
       <!-- address -->
-      <ion-item lines="none">
+      <ion-item lines="none" [class.has-value]="hasValue('address')">
         <ion-input
           label="Dirección"
           labelPlacement="floating"
@@ -24,9 +24,10 @@
         ></ion-input>
       </ion-item>
       <!-- cityBlock -->
-      <ion-item>
+      <ion-item [class.has-value]="hasValue('cityBlock')">
         <ion-input
           type="number"
+          min="0"
           label="Manzana(opcional)"
           labelPlacement="floating"
           formControlName="cityBlock"
@@ -37,8 +38,14 @@
         <ion-col size="auto">
           <ion-button (click)="takePhoto()">Tomar foto</ion-button>
         </ion-col>
+        <ion-col size="auto" *ngIf="treeForm.get('photoFileName')?.value">
+          <ion-button (click)="removePhoto()" color="danger" fill="outline">
+            <ion-icon name="trash" slot="start"></ion-icon>
+            Quitar foto
+          </ion-button>
+        </ion-col>
         <ion-col>
-          <ion-item>
+          <ion-item [class.has-value]="hasValue('photoFileName')">
             <ion-input
               [readonly]="true"
               label="archivo"
@@ -49,10 +56,16 @@
         </ion-col>
       </ion-row>
 
-      <ion-item>
+      <!-- Photo preview -->
+      <ion-card-content *ngIf="image">
+        <img [src]="image.dataUrl" alt="Foto del árbol" class="preview-image" />
+      </ion-card-content>
+      <ion-item
+        [class.has-value]="hasValue('latitude') || hasValue('longitude')"
+      >
         <ion-label>Obtener posición actual</ion-label>
         <ion-checkbox
-          class="check"
+          class="checkbox"
           (ionChange)="onTogglePosition($event)"
         ></ion-checkbox>
         <ion-input
@@ -71,10 +84,11 @@
         ></ion-input>
       </ion-item>
       <!-- treesInTheBlock -->
-      @if (projectType) {
-      <ion-item>
+      @if (projectType === 'muestreo') {
+      <ion-item [class.has-value]="hasValue('treesInTheBlock')">
         <ion-input
           type="number"
+          min="0"
           label="Cantidad de árboles en la manzana"
           labelPlacement="floating"
           errorText="Invalid"
@@ -89,35 +103,73 @@
       </ion-card-header>
       <!-- isMissing -->
       @if (!treeForm.get('isDead')?.value) {
-      <ion-item>
+      <ion-item [class.has-value]="hasValue('isMissing')">
         <ion-label>¿Es árbol faltante?</ion-label>
-        <ion-checkbox formControlName="isMissing"></ion-checkbox>
+        <ion-checkbox
+          class="checkbox"
+          formControlName="isMissing"
+        ></ion-checkbox>
       </ion-item>
       }
       <!-- isDead -->
       @if (!treeForm.get('isMissing')?.value) {
-      <ion-item>
+      <ion-item [class.has-value]="hasValue('isDead')">
         <ion-label>¿Está muerto?</ion-label>
-        <ion-checkbox formControlName="isDead"></ion-checkbox>
+        <ion-checkbox class="checkbox" formControlName="isDead"></ion-checkbox>
       </ion-item>
       }
       <!-- treeTypeName -->
       @if ( !treeForm.get('isMissing')?.value && !treeForm.get('isDead')?.value
       ) {
       <div>
-        <ion-item>
-          <ion-label position="floating">Tipo de árbol</ion-label>
-          <ion-select formControlName="treeTypeName">
-            @for (option of treeTypeOptions; track option) {
-            <ion-select-option [value]="option">{{ option }}</ion-select-option>
-            }
-          </ion-select>
+        <ion-item [class.has-value]="hasValue('treeTypeName')">
+          <ion-input
+            formControlName="treeTypeName"
+            label="Tipo de árbol"
+            labelPlacement="floating"
+            placeholder="Escriba el tipo de árbol"
+            autocomplete="off"
+            (ionFocus)="onTreeTypeInputFocus()"
+            (ionBlur)="onTreeTypeInputBlur()"
+          ></ion-input>
         </ion-item>
+
+        <!-- Autocomplete suggestions -->
+        @if (showSuggestions && filteredTreeTypes.length > 0) {
+        <ion-card class="autocomplete-suggestions">
+          <ion-list>
+            @for (treeType of filteredTreeTypes; track treeType.name) {
+            <ion-item
+              button
+              (click)="onTreeTypeSelect(treeType)"
+              [class.highlighted]="
+                treeType.name
+                  .toLowerCase()
+                  .includes(
+                    treeForm.get('treeTypeName')?.value?.toLowerCase() || ''
+                  )
+              "
+            >
+              <ion-label>{{ treeType.name }}</ion-label>
+            </ion-item>
+            } @if (filteredTreeTypes.length === 10) {
+            <ion-item class="more-results-hint">
+              <ion-label color="medium"
+                ><em
+                  >Escriba más para ver resultados específicos...</em
+                ></ion-label
+              >
+            </ion-item>
+            }
+          </ion-list>
+        </ion-card>
+        }
         <!-- perimeter -->
-        <ion-item lines="none">
+        <ion-item lines="none" [class.has-value]="hasValue('perimeter')">
           <ion-input
             type="number"
-            label="Perímetro"
+            min="0"
+            label="Perímetro(centímetros)"
             labelPlacement="floating"
             errorText="Invalid"
             formControlName="perimeter"
@@ -129,28 +181,49 @@
             <p>{{tiltValues.y}}</p>
             <p>{{tiltValues.z}}</p>
           </div> -->
-        <ion-item lines="none">
-          <tilt-measure (tiltChange)="onTiltChange($event)"></tilt-measure>
-          <ion-input
-            type="number"
-            label="Inclinación(ángulo en grados)"
-            labelPlacement="floating"
-            errorText="Invalid"
-            formControlName="incline"
-          ></ion-input>
-        </ion-item>
+        <div class="section">
+          <ion-card-header>
+            <ion-card-title> Cálculo de inclinación </ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <tilt-measure (tiltChange)="onTiltChange($event)"></tilt-measure>
+            <ion-item lines="none" [class.has-value]="hasValue('incline')">
+              <ion-input
+                type="number"
+                min="0"
+                label="Inclinación(ángulo en grados)"
+                labelPlacement="floating"
+                errorText="Invalid"
+                formControlName="incline"
+              ></ion-input>
+            </ion-item>
+          </ion-card-content>
+        </div>
         <!-- height -->
-        <ion-item lines="none">
-          <ion-input
-            type="number"
-            label="Altura"
-            labelPlacement="floating"
-            errorText="Invalid"
-            formControlName="height"
-          ></ion-input>
-        </ion-item>
+        <div class="section">
+          <ion-card-header>
+            <ion-card-title class="section-header">
+              Cálculo de altura
+            </ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <height-measure
+              (heightChange)="onHeightChange($event)"
+            ></height-measure>
+            <ion-item lines="none" [class.has-value]="hasValue('height')">
+              <ion-input
+                type="number"
+                min="0"
+                label="Altura (metros)"
+                labelPlacement="floating"
+                errorText="Invalid"
+                formControlName="height"
+              ></ion-input>
+            </ion-item>
+          </ion-card-content>
+        </div>
         <!-- treeValue -->
-        <ion-item>
+        <ion-item [class.has-value]="hasValue('treeValue')">
           <ion-label position="floating">Valor del árbol</ion-label>
           <ion-select formControlName="treeValue">
             @for (option of treeValueOptions; track option) {
@@ -164,7 +237,7 @@
         <div formArrayName="pestsNames" class="manyToMany">
           @for (pest of pestsNames.controls; track pest; let i = $index) {
           <div>
-            <ion-item>
+            <ion-item [class.has-value]="hasArrayValue('pestsNames', i)">
               <ion-input
                 [formControlName]="i"
                 label="Plaga {{ i + 1 }}"
@@ -190,7 +263,7 @@
           @for (disease of diseasesNames.controls; track disease; let i =
           $index) {
           <div>
-            <ion-item>
+            <ion-item [class.has-value]="hasArrayValue('diseasesNames', i)">
               <ion-input
                 [formControlName]="i"
                 label="Enfermedad {{ i + 1 }}"
@@ -217,7 +290,7 @@
           </ion-card-title>
         </ion-card-header>
         <!-- Wind Exposure -->
-        <ion-item>
+        <ion-item [class.has-value]="hasValue('windExposure')">
           <ion-label position="floating">Exposición al viento</ion-label>
           <ion-select formControlName="windExposure">
             @for (option of windExposureOptions; track option) {
@@ -228,7 +301,7 @@
           </ion-select>
         </ion-item>
         <!-- Vigor -->
-        <ion-item>
+        <ion-item [class.has-value]="hasValue('vigor')">
           <ion-label position="floating">Vigor</ion-label>
           <ion-select formControlName="vigor">
             @for (option of vigorOptions; track option) {
@@ -239,7 +312,7 @@
           </ion-select>
         </ion-item>
         <!-- Canopy Density -->
-        <ion-item>
+        <ion-item [class.has-value]="hasValue('canopyDensity')">
           <ion-label position="floating">Densidad de copa</ion-label>
           <ion-select formControlName="canopyDensity">
             @for (option of canopyDensityOptions; track option) {
@@ -255,7 +328,7 @@
           </ion-card-title>
         </ion-card-header>
         <!-- Growth Space -->
-        <ion-item>
+        <ion-item [class.has-value]="hasValue('growthSpace')">
           <ion-label position="floating">Espacio de crecimiento</ion-label>
           <ion-select formControlName="growthSpace">
             @for (option of growthSpaceOptions; track option) {
@@ -266,14 +339,17 @@
           </ion-select>
         </ion-item>
         <!-- exposedRoots -->
-        <ion-item>
+        <ion-item [class.has-value]="hasValue('exposedRoots')">
           <ion-label
             >¿Plato radicular levantado, rajado o raíces expuestas?</ion-label
           >
-          <ion-checkbox formControlName="exposedRoots"></ion-checkbox>
+          <ion-checkbox
+            class="checkbox"
+            formControlName="exposedRoots"
+          ></ion-checkbox>
         </ion-item>
         <!-- Conflict Section -->
-        <ion-item>
+        <ion-item [class.has-value]="hasValue('conflictsNames')">
           <ion-label position="stacked">Conflictos</ion-label>
           <ion-select
             formControlName="conflictsNames"
@@ -304,7 +380,7 @@
             }
           </ion-list>
           } @else {
-          <ion-item
+          <ion-item [class.has-value]="hasValue('nothingUnderTree')"
             ><ion-label color="medium" class="text-color-light-gray"
               >No hay conflictos seleccionados.</ion-label
             ></ion-item
@@ -317,14 +393,23 @@
           </ion-card-title>
         </ion-card-header>
         <!-- nothingUnderTree -->
-        <ion-item>
+        <ion-item
+          [class.has-value]="hasValue('nothingUnderTree')"
+          [class.has-value]="hasValue('nothingUnderTree')"
+        >
           <ion-label>No hay nada bajo el árbol</ion-label>
-          <ion-checkbox formControlName="nothingUnderTree"></ion-checkbox>
+          <ion-checkbox
+            class="checkbox"
+            formControlName="nothingUnderTree"
+          ></ion-checkbox>
         </ion-item>
         @if (!treeForm.get('nothingUnderTree')?.value) {
         <div>
           <!-- useUnderTheTree -->
-          <ion-item lines="none">
+          <ion-item
+            lines="none"
+            [class.has-value]="hasValue('useUnderTheTree')"
+          >
             <ion-input
               label="¿Qué hay bajo el árbol?(blanco)"
               labelPlacement="floating"
@@ -333,7 +418,7 @@
             ></ion-input>
           </ion-item>
           <!-- frequencyUse -->
-          <ion-item>
+          <ion-item [class.has-value]="hasValue('frequencyUse')">
             <ion-label position="floating"
               >¿Con qué Frecuencia se encuentra?</ion-label
             >
@@ -347,16 +432,22 @@
             </ion-select>
           </ion-item>
           <!-- isMovable -->
-          <ion-item>
+          <ion-item [class.has-value]="hasValue('isMovable')">
             <ion-label>¿Se puede Mover el blanco bajo del árbol?</ion-label>
-            <ion-checkbox formControlName="isMovable"></ion-checkbox>
+            <ion-checkbox
+              class="checkbox"
+              formControlName="isMovable"
+            ></ion-checkbox>
           </ion-item>
           <!-- isRestrictable -->
-          <ion-item>
+          <ion-item [class.has-value]="hasValue('isRestrictable')">
             <ion-label class="ion-text-center"
               >¿Se puede Restringir el blanco bajo del árbol?</ion-label
             >
-            <ion-checkbox formControlName="isRestrictable"></ion-checkbox>
+            <ion-checkbox
+              class="checkbox"
+              formControlName="isRestrictable"
+            ></ion-checkbox>
           </ion-item>
         </div>
         }
@@ -367,7 +458,9 @@
             Defectos en las raíces
           </ion-card-title>
         </ion-card-header>
-        <ion-item>
+        <ion-item
+          [class.has-value]="hasValue('fruitingBodiesOfFungiOnNeckOrRoots')"
+        >
           <ion-label position="stacked"
             >Cuerpos fructíferos de hongos en cuello o raíces</ion-label
           >
@@ -383,7 +476,7 @@
             >
           </ion-select>
         </ion-item>
-        <ion-item>
+        <ion-item [class.has-value]="hasValue('mechanicalDamageToRoots')">
           <ion-label position="stacked">Daño mecánico a raíces</ion-label>
           <ion-select formControlName="mechanicalDamageToRoots">
             @for (keyValue of mechanicalDamageToRootsEntries; track keyValue) {
@@ -396,7 +489,7 @@
             >
           </ion-select>
         </ion-item>
-        <ion-item>
+        <ion-item [class.has-value]="hasValue('stranglingRoots')">
           <ion-label position="stacked">Raíces estrangulantes</ion-label>
           <ion-select formControlName="stranglingRoots">
             @for (keyValue of stranglingRootsEntries; track keyValue) {
@@ -409,7 +502,7 @@
             >
           </ion-select>
         </ion-item>
-        <ion-item>
+        <ion-item [class.has-value]="hasValue('deadRoots')">
           <ion-label position="stacked">Raíces muertas</ion-label>
           <ion-select formControlName="deadRoots">
             @for (keyValue of deadRootsEntries; track keyValue) {
@@ -422,7 +515,7 @@
             >
           </ion-select>
         </ion-item>
-        <ion-item>
+        <ion-item [class.has-value]="hasValue('symptomsDiseaseOfRootsInCrown')">
           <ion-label position="stacked"
             >Síntomas de enfermedad radicular en copa</ion-label
           >
@@ -441,7 +534,7 @@
             Defectos en tronco y cuello
           </ion-card-title>
         </ion-card-header>
-        <ion-item>
+        <ion-item [class.has-value]="hasValue('gallsTermiteMoundsAnthills')">
           <ion-label position="stacked"
             >Agallas, termiteros, hormigueros</ion-label
           >
@@ -455,7 +548,7 @@
             <ion-select-option [value]="null">no se observa</ion-select-option>
           </ion-select>
         </ion-item>
-        <ion-item>
+        <ion-item [class.has-value]="hasValue('cankersTrunk')">
           <ion-label position="stacked">Cancros de tronco o cuello</ion-label>
           <ion-select formControlName="cankersTrunk">
             @for (keyValue of cankersTrunkEntries; track keyValue) {
@@ -466,21 +559,24 @@
             <ion-select-option [value]="null">sin cancro</ion-select-option>
           </ion-select>
         </ion-item>
-        <ion-item>
+        <ion-item [class.has-value]="hasValue('isCavitiesTrunk')">
           <ion-label>¿Tiene cavidades en el tronco?</ion-label>
           <ion-checkbox
-            class="check"
+            class="checkboxDefect"
             formControlName="isCavitiesTrunk"
           ></ion-checkbox>
           @if (treeForm.get('isCavitiesTrunk')?.value) {
           <div>
             <ion-input
-              label="Mida el valor de t"
+              [class.has-value]="hasValue('cavitiesTrunk_t')"
+              label="Mida el valor de t(cm)"
               type="number"
+              min="0"
               labelPlacement="floating"
               errorText="Invalid"
               formControlName="cavitiesTrunk_t"
             ></ion-input>
+
             @if (!this.treeForm.get('cavitiesTrunk_t')?.value) {
             <ion-note color="warning">
               Advertencia: Si no ingresa el valor de t, este defecto no se
@@ -490,7 +586,7 @@
           </div>
           }
         </ion-item>
-        <ion-item>
+        <ion-item [class.has-value]="hasValue('cankersTrunk')">
           <ion-label position="stacked">Cancros de tronco o cuello</ion-label>
           <ion-select formControlName="cankersTrunk">
             @for (keyValue of cankersTrunkEntries; track keyValue) {
@@ -501,17 +597,19 @@
             <ion-select-option [value]="null">sin cancro</ion-select-option>
           </ion-select>
         </ion-item>
-        <ion-item>
+        <ion-item [class.has-value]="hasValue('isLostOrDeadBark')">
           <ion-label>¿Hay corteza pérdida o muerta en el tronco?</ion-label>
           <ion-checkbox
-            class="check"
+            class="checkboxDefect"
             formControlName="isLostOrDeadBark"
           ></ion-checkbox>
           @if (treeForm.get('isLostOrDeadBark')?.value) {
           <div>
             <ion-input
-              label="Mida el perímetro afectado"
+              [class.has-value]="hasValue('lostOrDeadBark_width')"
+              label="Mida el perímetro(cm) afectado"
               type="number"
+              min="0"
               labelPlacement="floating"
               errorText="Invalid"
               formControlName="lostOrDeadBark_width"
@@ -525,7 +623,7 @@
           </div>
           }
         </ion-item>
-        <ion-item>
+        <ion-item [class.has-value]="hasValue('multipleTrunks')">
           <ion-label position="stacked">Fustes múltiples</ion-label>
           <ion-select formControlName="multipleTrunks">
             @for (keyValue of multipleTrunksEntries; track keyValue) {
@@ -536,16 +634,19 @@
             <ion-select-option [value]="null">no</ion-select-option>
           </ion-select>
         </ion-item>
-        <ion-item>
-          <ion-label
-            >¿Hay heridas en el tronco(no leves o superficiales)?</ion-label
-          >
-          <ion-checkbox class="check" formControlName="isWounds"></ion-checkbox>
+        <ion-item [class.has-value]="hasValue('isWounds')">
+          <ion-label>¿Hay heridas en el tronco (no leves)?</ion-label>
+          <ion-checkbox
+            class="checkboxDefect"
+            formControlName="isWounds"
+          ></ion-checkbox>
           @if (treeForm.get('isWounds')?.value) {
           <div>
             <ion-input
-              label="Mida el perímetro afectado"
+              [class.has-value]="hasValue('wounds_width')"
+              label="Mida el perímetro(cm) afectado"
               type="number"
+              min="0"
               labelPlacement="floating"
               errorText="Invalid"
               formControlName="wounds_width"
@@ -559,7 +660,7 @@
           </div>
           }
         </ion-item>
-        <ion-item>
+        <ion-item [class.has-value]="hasValue('forkTrunk')">
           <ion-label position="stacked">Horqueta de tronco</ion-label>
           <ion-select formControlName="forkTrunk">
             @for (keyValue of forkTrunkEntries; track keyValue) {
@@ -570,40 +671,39 @@
             <ion-select-option [value]="null">sin horqueta</ion-select-option>
           </ion-select>
         </ion-item>
-        <ion-item>
+        <ion-item [class.has-value]="hasValue('isWoodRoot')">
           <ion-label>¿Hay pudrición de madera?</ion-label>
           <ion-checkbox
-            class="check"
+            class="checkboxDefect"
             formControlName="isWoodRoot"
           ></ion-checkbox>
           @if (this.treeForm.get('isWoodRoot')?.value) {
           <div>
             <ion-label>¿Es con presencia de cuerpos fructiferos?</ion-label>
             <ion-checkbox
-              class="check"
+              class="checkboxDefectFruitingBodies"
               formControlName="isWoodRoot_fruitingBodies"
             ></ion-checkbox>
             @if (!treeForm.get('isWoodRoot_fruitingBodies')?.value) {
-            <div>
-              <ion-input
-                label="Mida el valor de t"
-                type="number"
-                labelPlacement="floating"
-                errorText="Invalid"
-                formControlName="woodRoot_t"
-              ></ion-input>
-              @if (!this.treeForm.get('woodRoot_t')?.value) {
-              <ion-note color="warning">
-                Advertencia: Ingrese el valor de t si no hay presencia de CF. Si
-                no lo ingresa, este defecto no se tendrá en cuenta.
-              </ion-note>
-              }
-            </div>
-            }
+            <ion-input
+              [class.has-value]="hasValue('woodRoot_t')"
+              label="Mida el valor de t(cm)"
+              type="number"
+              min="0"
+              labelPlacement="floating"
+              errorText="Invalid"
+              formControlName="woodRoot_t"
+            ></ion-input>
+            @if (!this.treeForm.get('woodRoot_t')?.value) {
+            <ion-note color="warning">
+              Advertencia: Ingrese el valor de t si no hay presencia de CF. Si
+              no lo ingresa, este defecto no se tendrá en cuenta.
+            </ion-note>
+            } }
           </div>
           }
         </ion-item>
-        <ion-item>
+        <ion-item [class.has-value]="hasValue('fissuresTrunk')">
           <ion-label position="stacked">Rajaduras de tronco</ion-label>
           <ion-select formControlName="fissuresTrunk">
             @for (keyValue of fissuresTrunkEntries; track keyValue) {
@@ -619,7 +719,7 @@
             Defectos en ramas estructurales y ramas menores
           </ion-card-title>
         </ion-card-header>
-        <ion-item>
+        <ion-item [class.has-value]="hasValue('cankersBranch')">
           <ion-label position="stacked">Cancros de ramas</ion-label>
           <ion-select formControlName="cankersBranch">
             @for (keyValue of cankersBranchEntries; track keyValue) {
@@ -630,7 +730,7 @@
             <ion-select-option [value]="null">sin cancro</ion-select-option>
           </ion-select>
         </ion-item>
-        <ion-item>
+        <ion-item [class.has-value]="hasValue('cavitiesBranches')">
           <ion-label position="stacked">Cavidades</ion-label>
           <ion-select formControlName="cavitiesBranches">
             @for (keyValue of cavitiesBranchesEntries; track keyValue) {
@@ -641,7 +741,7 @@
             <ion-select-option [value]="null">sin cavidades</ion-select-option>
           </ion-select>
         </ion-item>
-        <ion-item>
+        <ion-item [class.has-value]="hasValue('fruitingBodiesOfFungi')">
           <ion-label position="stacked"
             >Cuerpos fructíferos de hongos</ion-label
           >
@@ -656,7 +756,7 @@
             >
           </ion-select>
         </ion-item>
-        <ion-item>
+        <ion-item [class.has-value]="hasValue('forkBranch')">
           <ion-label position="stacked">Horqueta de ramas</ion-label>
           <ion-select formControlName="forkBranch">
             @for (keyValue of forkBranchEntries; track keyValue) {
@@ -667,7 +767,7 @@
             <ion-select-option [value]="null">sin horqueta</ion-select-option>
           </ion-select>
         </ion-item>
-        <ion-item>
+        <ion-item [class.has-value]="hasValue('hangingOrBrokenBranches')">
           <ion-label position="stacked">Ramas colgantes o quebradas</ion-label>
           <ion-select
             formControlName="hangingOrBrokenBranches"
@@ -683,18 +783,18 @@
             >
           </ion-select>
           @if (hangingOrBrokenBranches_branches) {
-          <div>
-            <ion-input
-              label="Número de ramas colgantes o quebradas"
-              type="number"
-              labelPlacement="floating"
-              errorText="Invalid"
-              formControlName="hangingOrBrokenBranches_branches"
-            ></ion-input>
-          </div>
+          <ion-input
+            [class.has-value]="hasValue('hangingOrBrokenBranches_branches')"
+            label="Cantidad de ramas colgantes o quebradas"
+            type="number"
+            min="0"
+            labelPlacement="floating"
+            errorText="Invalid"
+            formControlName="hangingOrBrokenBranches_branches"
+          ></ion-input>
           }
         </ion-item>
-        <ion-item>
+        <ion-item [class.has-value]="hasValue('deadBranches')">
           <ion-label position="stacked">Ramas muertas</ion-label>
           <ion-select
             formControlName="deadBranches"
@@ -710,18 +810,18 @@
             >
           </ion-select>
           @if (deadBranches_branches) {
-          <div>
-            <ion-input
-              label="Número de ramas muertas"
-              type="number"
-              labelPlacement="floating"
-              errorText="Invalid"
-              formControlName="deadBranches_branches"
-            ></ion-input>
-          </div>
+          <ion-input
+            [class.has-value]="hasValue('deadBranches_branches')"
+            label="Cantidad de ramas muertas"
+            type="number"
+            min="0"
+            labelPlacement="floating"
+            errorText="Invalid"
+            formControlName="deadBranches_branches"
+          ></ion-input>
           }
         </ion-item>
-        <ion-item>
+        <ion-item [class.has-value]="hasValue('overExtendedBranches')">
           <ion-label position="stacked">Ramas sobre extendidas</ion-label>
           <ion-select
             formControlName="overExtendedBranches"
@@ -737,7 +837,7 @@
             >
           </ion-select>
         </ion-item>
-        <ion-item>
+        <ion-item [class.has-value]="hasValue('fissuresBranches')">
           <ion-label position="stacked">Rajaduras de ramas</ion-label>
           <ion-select formControlName="fissuresBranches">
             @for (keyValue of fissuresBranchesEntries; track keyValue) {
@@ -748,7 +848,7 @@
             <ion-select-option [value]="null">sin rajaduras</ion-select-option>
           </ion-select>
         </ion-item>
-        <ion-item>
+        <ion-item [class.has-value]="hasValue('woodRot')">
           <ion-label position="stacked">Pudrición de madera</ion-label>
           <ion-select formControlName="woodRot">
             @for (keyValue of woodRotEntries; track keyValue) {
@@ -761,7 +861,9 @@
             >
           </ion-select>
         </ion-item>
-        <ion-item>
+        <ion-item
+          [class.has-value]="hasValue('interferenceWithTheElectricalGrid')"
+        >
           <ion-label position="stacked"
             >Interferencia con red eléctrica</ion-label
           >
@@ -787,10 +889,14 @@
           @if (selectedDefectsSummary.length > 0) {
           <ion-list>
             @for (defect of selectedDefectsSummary; track defect) {
-            <ion-item class="item-border">
-              <span class="defect-label">{{ defect.label }}</span>
-              <span class="defect-value">{{ defect.value }}</span>
-            </ion-item>
+            <ion-row>
+              <ion-col size="5">
+                <span class="defect-label">{{ defect.label }}</span>
+              </ion-col>
+              <ion-col size="6">
+                <span>{{ defect.value }}</span>
+              </ion-col>
+            </ion-row>
             }
           </ion-list>
           } @else {
@@ -802,7 +908,7 @@
           }
         </ion-card-content>
       </div>
-      }
+
       <!-- Intervention Section -->
       <ion-card-header class="sub-title gray">
         <ion-card-title class="text-color-white">
@@ -810,9 +916,8 @@
         </ion-card-title>
       </ion-card-header>
       <!-- potentialDamage -->
-      @if ( !treeForm.get('isMissing')?.value && !treeForm.get('isDead')?.value
-      ) {
-      <ion-item>
+
+      <ion-item [class.has-value]="hasValue('potentialDamage')">
         <ion-label position="floating"
           >Potencial de daño del árbol o rama si se cae</ion-label
         >
@@ -825,11 +930,9 @@
           }
         </ion-select>
       </ion-item>
-      }
+
       <!-- Intervention Section -->
-      @if ( !treeForm.get('isMissing')?.value && !treeForm.get('isDead')?.value
-      ) {
-      <ion-item>
+      <ion-item [class.has-value]="hasValue('interventionsNames')">
         <ion-label position="stacked">Intervenciones</ion-label>
         <ion-select
           formControlName="interventionsNames"
@@ -845,7 +948,6 @@
           }
         </ion-select>
       </ion-item>
-      }
 
       <!-- List of selected interventions -->
       <ion-card-header>
@@ -869,8 +971,13 @@
         </ion-item>
         }
       </ion-card-content>
-      @if ( treeForm.get('isMissing')?.value || treeForm.get('isDead')?.value )
-      {
+      } @if ( treeForm.get('isMissing')?.value || treeForm.get('isDead')?.value
+      ) {
+      <ion-card-header class="sub-title gray">
+        <ion-card-title class="text-color-white">
+          Mitigación del riesgo/acciones correctivas
+        </ion-card-title>
+      </ion-card-header>
       <ion-item>
         {{
           treeForm.get("isMissing")?.value

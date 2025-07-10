@@ -34,8 +34,8 @@ export class AuthService {
       })
       .pipe(
         tap((value) => {
-          this.storageService.set('auth.token', value.access_token);
-          this.storageService.set('auth.user', value.user.firstName);
+          this.storageService.set('token', value.access_token);
+          this.storageService.set('user', value.user);
         })
       );
   }
@@ -43,24 +43,15 @@ export class AuthService {
     this.storageService.clear();
     this.router.navigate(['auth/login']);
   }
-  getUserName(): Observable<string> {
-    return from(this.storageService.get('auth.user'));
+  getUser(): Observable<any> {
+    return from(this.storageService.get('user'));
   }
   getToken(): Observable<string | null> {
-    return from(this.storageService.get('auth.token'));
-  }
-  getIdUserFromToken(): Observable<number | null> {
-    return this.getToken().pipe(
-      map((token) => {
-        if (!token) return null; // Handle the case when the token is null
-        const decoded = jwtDecode<DecodedToken>(token);
-        return decoded.idUser;
-      })
-    );
+    return from(this.storageService.get('token'));
   }
   isTokenExpired(token: string): boolean {
     try {
-      const decoded: any = jwtDecode(token);
+      const decoded = jwtDecode<DecodedToken>(token);
       const now = Math.floor(new Date().getTime() / 1000);
       console.log(decoded.exp - now);
       return decoded.exp - now < 3; // Refresh if token will expire in the next 3 seconds

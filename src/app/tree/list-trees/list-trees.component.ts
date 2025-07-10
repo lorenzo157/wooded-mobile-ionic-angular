@@ -15,19 +15,19 @@ export class ListTreesComponent implements OnInit {
   idProject!: number;
   trees: SimplyReadTreeDto[] = [];
   filterId: number | null = null;
-  projectType!: boolean;
+  projectType!: string | null;
   constructor(
     private route: ActivatedRoute,
     private treeService: TreeService,
     private router: Router,
-    private uiService: UiService,
+    private uiService: UiService
   ) {}
 
   async ngOnInit() {
     await this.uiService.cargando(true);
     this.route.paramMap.subscribe((params) => {
       this.idProject = +params.get('idProject')!; // Retrieve project ID from route
-      this.projectType = params.get('projectType') === 'muestreo'; // Retrieve project ID from route
+      this.projectType = params.get('projectType'); // Retrieve project ID from route
       this.loadTrees();
     });
   }
@@ -46,7 +46,7 @@ export class ListTreesComponent implements OnInit {
   }
   viewTreeDetails(idTree: number) {
     this.router.navigate([
-      `/project/${this.idProject}/tree/${this.projectType ? 'muestreo' : 'individual'}/detailtree/${idTree}`,
+      `/project/${this.idProject}/tree/${this.projectType}/detailtree/${idTree}`,
     ]); // Navigate with both projectId and idTree
   }
   get filteredTrees() {

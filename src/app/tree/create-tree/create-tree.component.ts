@@ -2,12 +2,20 @@ import { Component, OnInit } from '@angular/core';
 import { debounceTime } from 'rxjs/operators';
 import { TreeService, NumberToStringMap } from '../tree.service';
 import { CreateTreeDto } from '../dto/create-tree.dto';
+import { ReadTreeDto } from '../dto/read-tree.dto';
 import { ActivatedRoute } from '@angular/router';
 import { Router } from '@angular/router';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Geolocation } from '@capacitor/geolocation';
 import { UiService } from '../../utils/ui.service';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { HttpClient } from '@angular/common/http';
+
+// Interface for tree type with genus information
+interface TreeType {
+  name: string;
+  genus: string;
+}
 import {
   windExposureOptions,
   vigorOptions,
@@ -16,7 +24,6 @@ import {
   treeValueOptions,
   frequencyUseOptions,
   potentialDamageOptions,
-  treeTypeOptions,
   conflictOptions,
   interventionOptions,
   fruitingBodiesOfFungiOnNeckOrRoots,
@@ -46,6 +53,7 @@ import {
   woodRot,
   interferenceWithTheElectricalGrid,
 } from '../../constants/API';
+import { ReadDefectTreeDto } from '../dto/read-defect-tree.dto';
 
 @Component({
   selector: 'app-create-tree',
@@ -61,9 +69,14 @@ export class CreateTreeComponent implements OnInit {
   treeValueOptions = treeValueOptions;
   frequencyUseOptions = frequencyUseOptions;
   potentialDamageOptions = potentialDamageOptions;
-  treeTypeOptions = treeTypeOptions;
+  treeTypeOptions: TreeType[] = [];
+  filteredTreeTypes: TreeType[] = [];
+  selectedTreeType: TreeType | null = null; // Store the selected tree type
+  showSuggestions: boolean = false;
+  isSelectingFromList: boolean = false;
   conflictOptions = conflictOptions;
   interventionOptions = interventionOptions;
+  treeInfoCollectionStartTime: Date = new Date();
   // DEFECTOS EN LAS RAICES
   fruitingBodiesOfFungiOnNeckOrRootsEntries = Object.entries(
     fruitingBodiesOfFungiOnNeckOrRoots
@@ -98,27 +111,35 @@ export class CreateTreeComponent implements OnInit {
   selectedDefectsSummary: { label: string; value: string }[] = [];
   private idProject!: number;
   idTree: number | null = null;
-  projectType!: boolean;
+  projectType!: string | null;
   treeForm: FormGroup;
   private dch!: number;
   hangingOrBrokenBranches_branches: boolean = false;
   deadBranches_branches: boolean = false;
   showWarning: boolean = false;
   operation: string = 'Registración';
-  private image: any;
+  image: any;
   tiltValues = { angle: 0, x: 0, y: 0, z: 0 };
+  heightValues = { height: 0, x: 0, y: 0, z: 0 };
+  height: number = 0;
+
   onTiltChange(event: { angle: number; x: number; y: number; z: number }) {
     this.tiltValues = event;
-    this.treeForm
-      .get('incline')
-      ?.setValue(Number(Number(event.angle.toFixed(2))));
+    this.treeForm.get('incline')?.setValue(Number(event.angle.toFixed(2)));
+  }
+  onHeightChange(event: { height: number; x: number; y: number; z: number }) {
+    console.log(' event.height:', event.height);
+    console.log(' typeof event.height:', typeof event.height);
+    this.heightValues = event;
+    this.treeForm.get('height')?.setValue(Number(event.height.toFixed(2)));
   }
   constructor(
     private route: ActivatedRoute,
     private treeService: TreeService,
     private router: Router,
     private fb: FormBuilder,
-    private uiService: UiService
+    private uiService: UiService,
+    private http: HttpClient
   ) {
     this.treeForm = this.fb.group({
       photoFileName: [null],
@@ -186,21 +207,101 @@ export class CreateTreeComponent implements OnInit {
   ngOnInit() {
     this.route.paramMap.subscribe((params) => {
       this.idProject = +params.get('idProject')!; // Retrieve project ID from route
-      this.projectType = params.get('projectType') === 'muestreo';
+      this.projectType = params.get('projectType');
       if (params.get('idTree') !== '0') this.idTree = +params.get('idTree')!;
       this.operation = this.idTree ? 'Actualización' : 'Registración';
       console.log(this.idTree);
     });
-    if (this.projectType) {
+
+    if (this.projectType === 'muestreo') {
       this.treeForm.get('treeValue')?.clearValidators();
       this.treeForm.get('treeValue')?.updateValueAndValidity();
     } else {
       this.treeForm.get('treesInTheBlock')?.clearValidators();
       this.treeForm.get('treesInTheBlock')?.updateValueAndValidity();
     }
+
     this.treeForm.valueChanges.pipe(debounceTime(100)).subscribe(() => {
       this.updateSelectedDefectsSummary();
     });
+
+    // Load tree types from JSON file first, then load existing tree data if updating
+    this.loadTreeTypes();
+
+    // Set up autocomplete for tree type
+    this.treeForm
+      .get('treeTypeName')
+      ?.valueChanges.pipe(debounceTime(300))
+      .subscribe((value) => {
+        if (!this.isSelectingFromList) {
+          // Reset selected tree type when user types manually
+          this.selectedTreeType = null;
+          this.filterTreeTypes(value || '');
+          this.showSuggestions = !!(
+            value &&
+            value.trim().length > 0 &&
+            this.filteredTreeTypes.length > 0
+          );
+        }
+        this.isSelectingFromList = false;
+      });
+    if (this.idTree) {
+      this.loadExistingTreeData();
+    }
+  }
+
+  private loadTreeTypes() {
+    this.http.get<TreeType[]>('assets/tree-types.json').subscribe({
+      next: (treeTypes) => {
+        this.treeTypeOptions = treeTypes;
+        this.filteredTreeTypes = [...treeTypes];
+      },
+    });
+  }
+
+  filterTreeTypes(searchText: string) {
+    if (!searchText || searchText.trim() === '') {
+      this.filteredTreeTypes = [];
+    } else {
+      const filterValue = searchText.toLowerCase();
+      // Don't show suggestions if the input exactly matches an existing tree type
+      const exactMatch = this.treeTypeOptions.find(
+        (treeType) => treeType.name.toLowerCase() === filterValue
+      );
+
+      if (exactMatch) {
+        this.filteredTreeTypes = [];
+      } else {
+        this.filteredTreeTypes = this.treeTypeOptions
+          .filter((treeType) =>
+            treeType.name.toLowerCase().includes(filterValue)
+          )
+          .slice(0, 10); // Limit to 10 suggestions for better UX
+      }
+    }
+  }
+
+  onTreeTypeSelect(treeType: TreeType) {
+    this.isSelectingFromList = true;
+    this.treeForm.get('treeTypeName')?.setValue(treeType.name);
+    this.selectedTreeType = treeType; // Set the selected tree type
+    this.showSuggestions = false;
+    this.filteredTreeTypes = [];
+  }
+
+  onTreeTypeInputFocus() {
+    const currentValue = this.treeForm.get('treeTypeName')?.value;
+    if (currentValue && currentValue.trim().length > 0) {
+      this.filterTreeTypes(currentValue);
+      this.showSuggestions = this.filteredTreeTypes.length > 0;
+    }
+  }
+
+  onTreeTypeInputBlur() {
+    // Delay hiding suggestions to allow for click events on suggestions
+    setTimeout(() => {
+      this.showSuggestions = false;
+    }, 200);
   }
   addConditionalValidation() {
     const isMissingControl = this.treeForm.get('isMissing');
@@ -230,7 +331,7 @@ export class CreateTreeComponent implements OnInit {
     });
 
     this.treeForm.get('perimeter')?.valueChanges.subscribe((perimeterValue) => {
-      if (perimeterValue) this.dch = perimeterValue / Math.PI;
+      if (perimeterValue) this.dch = perimeterValue / Math.PI / 100; // Convert to meters
     });
     this.treeForm.get('isWoodRoot')?.valueChanges.subscribe((isWoodRoot) => {
       if (!isWoodRoot)
@@ -299,14 +400,8 @@ export class CreateTreeComponent implements OnInit {
   get pestsNames() {
     return this.treeForm.get('pestsNames') as FormArray;
   }
-  get conflictsNames() {
-    return this.treeForm.get('conflictsNames') as FormArray;
-  }
   get diseasesNames() {
     return this.treeForm.get('diseasesNames') as FormArray;
-  }
-  get interventionsNames() {
-    return this.treeForm.get('interventionsNames') as FormArray;
   }
 
   showBranchesInput(event: any, nameInput: string) {
@@ -355,19 +450,23 @@ export class CreateTreeComponent implements OnInit {
       });
       this.treeForm
         .get('photoFileName')
-        ?.setValue(`tree_${Date.now() - 1734000000000}.jpg`);
+        ?.setValue(`tree_${Date.now() - 1750000000000}.jpg`);
     } catch (error) {
       this.uiService.alert('Error al tomar la foto', 'Error');
     }
   }
 
+  removePhoto() {
+    this.image = null;
+    this.treeForm.get('photoFileName')?.setValue(null);
+  }
+
   async onSubmit() {
     console.log(
-      this.treeForm.get('pestsNames')?.value,
-      'pestes'
+      '🚀 ~ CreateTreeComponent ~ createTree ~ this.selectedTreeType:',
+      this.selectedTreeType
     );
     if (this.treeForm.valid) {
-      console.log('is validoooo');
       await this.uiService.alert(
         '¿Desea finalizar la ' + this.operation + ' del árbol?',
         this.operation,
@@ -399,6 +498,7 @@ export class CreateTreeComponent implements OnInit {
     newTree.latitude = this.treeForm.get('latitude')?.value;
     newTree.longitude = this.treeForm.get('longitude')?.value;
     newTree.treesInTheBlock = this.treeForm.get('treesInTheBlock')?.value;
+    newTree.treeInfoCollectionStartTime = this.treeInfoCollectionStartTime;
 
     if (newTree.isMissing || newTree.isDead) {
       newTree.isMissing
@@ -421,7 +521,22 @@ export class CreateTreeComponent implements OnInit {
       newTree.canopyDensity = this.treeForm.get('canopyDensity')?.value;
       newTree.growthSpace = this.treeForm.get('growthSpace')?.value;
       newTree.treeValue = this.treeForm.get('treeValue')?.value;
-      newTree.treeTypeName = this.treeForm.get('treeTypeName')?.value;
+      newTree.treeTypeName = this.treeForm
+        .get('treeTypeName')
+        ?.value.toLowerCase();
+
+      // Set gender (genus) information if we have a selected tree type
+      if (this.selectedTreeType) {
+        newTree.gender = this.selectedTreeType.genus;
+      } else {
+        // If no selected tree type (manual entry), try to find genus from tree type options
+        const treeTypeName = this.treeForm.get('treeTypeName')?.value;
+        const foundTreeType = this.treeTypeOptions.find(
+          (tt) => tt.name.toLowerCase() === treeTypeName?.toLowerCase()
+        );
+        newTree.gender = foundTreeType?.genus;
+      }
+
       newTree.conflictsNames = this.treeForm.get('conflictsNames')?.value;
       newTree.pestsNames = this.treeForm.get('pestsNames')?.value;
       newTree.diseasesNames = this.treeForm.get('diseasesNames')?.value;
@@ -546,15 +661,21 @@ export class CreateTreeComponent implements OnInit {
       );
 
       const cavitiesTrunk_t = this.treeForm.get('cavitiesTrunk_t')?.value;
-      if (cavitiesTrunk_t && newTree.perimeter) {
-        const tr = cavitiesTrunk_t / (newTree.perimeter / 2 / Math.PI);
+      const isCavitiesTrunk = this.treeForm.get('isCavitiesTrunk')?.value;
+      if (isCavitiesTrunk && cavitiesTrunk_t && newTree.perimeter) {
+        const tr = cavitiesTrunk_t / (newTree.perimeter / 2 / Math.PI); // t/R
         console.log(newTree.perimeter / 2 / Math.PI);
-        console.log('tr_cavitiestrunk',tr);
+        console.log('tr_cavitiestrunk', tr);
         let defectValue: number = 1;
         if (tr < 0.15) defectValue = 4;
         else if (tr < 0.2) defectValue = 3;
         else if (tr < 0.3) defectValue = 2;
-        addDefect('cavidades en tronco', defectValue, cavitiesTrunk);
+        addDefect(
+          'cavidades en tronco',
+          defectValue,
+          cavitiesTrunk,
+          cavitiesTrunk_t
+        );
       }
       let slendernessCoefficent_number;
       if (newTree.height && newTree.dch) {
@@ -577,28 +698,35 @@ export class CreateTreeComponent implements OnInit {
           slendernessCoefficent
         );
       }
-      console.log('esbeltez',slendernessCoefficent_number);
-      const lostOrDeadBarkWidht = this.treeForm.get(
+      console.log('esbeltez', slendernessCoefficent_number);
+      const lostOrDeadBark_width = this.treeForm.get(
         'lostOrDeadBark_width'
       )?.value;
-      if (lostOrDeadBarkWidht && newTree.perimeter) {
-        const lostOrDeadBark_number = lostOrDeadBarkWidht / newTree.perimeter;
-        console.log('corteza perdida o muerta',lostOrDeadBark);
+      const isLostOrDeadBark = this.treeForm.get('isLostOrDeadBark')?.value;
+      if (isLostOrDeadBark && lostOrDeadBark_width && newTree.perimeter) {
+        const lostOrDeadBark_number = lostOrDeadBark_width / newTree.perimeter;
+        console.log('corteza perdida o muerta', lostOrDeadBark);
         let defectValue: number = 1;
         if (lostOrDeadBark_number < 0.25) defectValue = 2;
         else if (lostOrDeadBark_number < 0.5) defectValue = 3;
         else if (lostOrDeadBark_number > 0.5) defectValue = 4;
-        addDefect('corteza perdida o muerta', defectValue, lostOrDeadBark);
+        addDefect(
+          'corteza perdida o muerta',
+          defectValue,
+          lostOrDeadBark,
+          lostOrDeadBark_width
+        );
       }
 
-      const woundsWidht = this.treeForm.get('wounds_width')?.value;
-      if (woundsWidht && newTree.perimeter) {
-        const wounds_number = woundsWidht / newTree.perimeter;
-        console.log('heridas',wounds_number);
+      const wounds_width = this.treeForm.get('wounds_width')?.value;
+      const isWounds = this.treeForm.get('isWounds')?.value;
+      if (isWounds && wounds_width && newTree.perimeter) {
+        const wounds_number = wounds_width / newTree.perimeter;
+        console.log('heridas', wounds_number);
         let defectValue: number = 1;
         if (wounds_number < 0.5) defectValue = 3;
         else if (wounds_number > 0.5) defectValue = 4;
-        addDefect('heridas de tronco', defectValue, wounds);
+        addDefect('heridas de tronco', defectValue, wounds, wounds_width);
       }
 
       if (newTree.incline) {
@@ -608,31 +736,44 @@ export class CreateTreeComponent implements OnInit {
         else if (newTree.incline >= 30) defectValue = 4;
         addDefect('inclinacion', defectValue, inclination);
       }
-      if (this.treeForm.get('isWoodRoot')?.value) {
-        let t = this.treeForm.get('woodRoot_t')?.value;
+      const isWoodRoot = this.treeForm.get('isWoodRoot')?.value;
+      const woodRoot_t = this.treeForm.get('woodRoot_t')?.value;
+      const isWoodRoot_fruitingBodies = this.treeForm.get(
+        'isWoodRoot_fruitingBodies'
+      )?.value;
+      if (isWoodRoot) {
         let defectValue: number = 1;
         console.log(
           't_woodroot, perimeter, coef_esbeltez',
-          t,
+          woodRoot_t,
           newTree.perimeter,
           slendernessCoefficent_number
         );
-        if (this.treeForm.get('isWoodRoot_fruitingBodies')?.value)
+        if (isWoodRoot_fruitingBodies) {
           defectValue = 4;
-        else if (t && newTree.perimeter && slendernessCoefficent_number) {
-          const tr = t / (newTree.perimeter / (2 * Math.PI)); // t/R
+        } else if (
+          woodRoot_t &&
+          newTree.perimeter &&
+          slendernessCoefficent_number
+        ) {
+          const tr = woodRoot_t / (newTree.perimeter / (2 * Math.PI)); // t/R
           if (tr < 0.15 && slendernessCoefficent_number > 60) defectValue = 3;
           else if (tr < 0.2 && slendernessCoefficent_number > 60)
             defectValue = 2;
         }
-        addDefect('pudricion de madera en tronco', defectValue, woodRotTrunk);
+        addDefect(
+          'pudricion de madera en tronco',
+          defectValue,
+          woodRotTrunk,
+          woodRoot_t
+        );
       }
 
-      console.log('defectos: ',newTree.createDefectsDtos);
+      console.log('defectos: ', newTree.createDefectsDtos);
       const defectValues = newTree.createDefectsDtos.map(
         (createDefectDto) => createDefectDto.defectValue
       );
-      let maxDefectValue = defectValues.length
+      const maxDefectValue = defectValues.length
         ? Math.max(...defectValues)
         : null;
 
@@ -646,25 +787,23 @@ export class CreateTreeComponent implements OnInit {
       if (newTree.frequencyUse) newTree.risk += newTree.frequencyUse;
       if (newTree.potentialDamage) newTree.risk += newTree.potentialDamage;
 
-      console.log('maxDefectValue',maxDefectValue);
-      console.log('  risk', newTree.risk );
+      console.log('maxDefectValue', maxDefectValue);
+      console.log('risk', newTree.risk);
 
       newTree.createDefectsDtos = newTree.createDefectsDtos.filter(
         (createDefectDto) => createDefectDto.defectValue > 1
       );
     } // end if
 
-    if (this.image) newTree.photoFile = this.image.dataUrl?.split(',')[1];
+    if (this.image && !this.image.dataUrl.includes(newTree.photoFileName))
+      newTree.photoFile = this.image.dataUrl?.split(',')[1];
     console.log('newTree', newTree);
-
     this.treeService.createOrUpdateTree(newTree, this.idTree).subscribe({
       next: (idTree) => {
         this.uiService.alert(`${this.operation} exitosa`, 'Éxito');
         this.router.navigate(
           [
-            `/project/${this.idProject}/tree/${
-              this.projectType ? 'muestreo' : 'individual'
-            }/detailtree/${idTree}`,
+            `/project/${this.idProject}/tree/${this.projectType}/detailtree/${idTree}`,
           ],
           { replaceUrl: true }
         );
@@ -850,5 +989,193 @@ export class CreateTreeComponent implements OnInit {
     }
 
     this.selectedDefectsSummary = summary;
+  }
+
+  // Helper method to check if a form control has a value (not null, undefined, empty string, or false for checkboxes)
+  hasValue(controlName: string): boolean {
+    const control = this.treeForm.get(controlName);
+    if (!control) return false;
+
+    const value = control.value;
+
+    // For checkboxes, consider true as having a value
+    if (typeof value === 'boolean') {
+      return value === true;
+    }
+
+    // For arrays (like FormArray), check if it has items
+    if (Array.isArray(value)) {
+      return value.length > 0;
+    }
+
+    // For strings and numbers, check if not null, undefined, or empty string
+    return value !== null && value !== undefined && value !== '';
+  }
+
+  // Helper method to check if a FormArray control at specific index has a value
+  hasArrayValue(arrayName: string, index: number): boolean {
+    const array = this.treeForm.get(arrayName) as FormArray;
+    if (!array || !array.at(index)) return false;
+
+    const value = array.at(index).value;
+    return value !== null && value !== undefined && value !== '';
+  }
+
+  private loadExistingTreeData() {
+    // Only load if idTree exists
+    if (!this.idTree) {
+      return;
+    }
+
+    this.uiService.cargando(true);
+    this.treeService.getTreeById(this.idTree).subscribe({
+      next: (tree) => {
+        this.uiService.cargando(false);
+        this.populateFormWithTreeData(tree);
+      },
+      error: (error) => {
+        this.uiService.cargando(false);
+        console.error('Error loading tree data:', error);
+        this.uiService.alert('No se pudo cargar los datos del árbol.', 'Error');
+      },
+    });
+  }
+
+  private populateFormWithTreeData(tree: ReadTreeDto) {
+    // Basic form fields
+    this.treeForm.patchValue({
+      cityBlock: tree.cityBlock,
+      perimeter: tree.perimeter,
+      height: tree.height,
+      incline: tree.incline,
+      treesInTheBlock: tree.treesInTheBlock,
+      useUnderTheTree: tree.useUnderTheTree,
+      frequencyUse: tree.frequencyUse,
+      potentialDamage: tree.potentialDamage,
+      isMovable: tree.isMovable,
+      isRestrictable: tree.isRestrictable,
+      isMissing: tree.isMissing,
+      isDead: tree.isDead,
+      exposedRoots: tree.exposedRoots,
+      windExposure: tree.windExposure,
+      vigor: tree.vigor,
+      canopyDensity: tree.canopyDensity,
+      growthSpace: tree.growthSpace,
+      treeValue: tree.treeValue,
+      address: tree.address,
+      latitude: tree.latitude,
+      longitude: tree.longitude,
+      treeTypeName: tree.treeTypeName,
+      nothingUnderTree: !tree.useUnderTheTree,
+      conflictsNames: tree.conflictsNames || [],
+      interventionsNames: tree.interventionsNames || [],
+    });
+    // Set selected tree type if available
+    if (tree.treeTypeName) {
+      const foundTreeType = this.treeTypeOptions.find(
+        (tt) => tt.name.toLowerCase() === tree.treeTypeName!.toLowerCase()
+      );
+      if (foundTreeType) {
+        this.selectedTreeType = foundTreeType;
+      }
+    }
+    // Handle photo
+    if (tree.photoFileName) {
+      // Store the existing photo filename
+      this.treeForm.get('photoFileName')?.setValue(tree.photoFileName);
+      this.image = {
+        dataUrl:
+          'https://woodedbucket.s3.us-east-1.amazonaws.com/trees_photos/' +
+          tree.photoFileName,
+      };
+    }
+    // Handle FormArrays
+    tree.diseasesNames.forEach((value) => {
+      (this as any)['diseasesNames'].push(
+        this.fb.control(value, Validators.required)
+      );
+    });
+    tree.pestsNames.forEach((value) => {
+      (this as any)['pestsNames'].push(
+        this.fb.control(value, Validators.required)
+      );
+    });
+    // Handle defects - extract values from ReadDefectTreeDto and set form controls
+    this.populateDefectsFromReadDefectDto(tree.readDefectDto);
+  }
+
+  private populateDefectsFromReadDefectDto(defects: ReadDefectTreeDto[]) {
+    console.log(
+      '🚀 ~ CreateTreeComponent ~ populateDefectsFromReadDefectDto ~ defects:',
+      defects
+    );
+    // Map defect names to form control names
+    const defectMappings: { [key: string]: string } = {
+      'cuerpos fructiferos de hongos en raices':
+        'fruitingBodiesOfFungiOnNeckOrRoots',
+      'daño mecanico a raices': 'mechanicalDamageToRoots',
+      'raices estrangulantes': 'stranglingRoots',
+      'raices muertas': 'deadRoots',
+      'sintomas de enfermedad radicular en copa':
+        'symptomsDiseaseOfRootsInCrown',
+      'agallas, termiteros, hormigueros': 'gallsTermiteMoundsAnthills',
+      'cancros de tronco': 'cankersTrunk',
+      'fustes miltiples': 'multipleTrunks',
+      'horqueta de tronco': 'forkTrunk',
+      'rajaduras de tronco': 'fissuresTrunk',
+      'cancros de rama': 'cankersBranch',
+      'cavidades de rama': 'cavitiesBranches',
+      'cuerpos fructiferos de hongos en rama': 'fruitingBodiesOfFungi',
+      'horqueta de rama': 'forkBranch',
+      'ramas colgantes o quebradas': 'hangingOrBrokenBranches',
+      'ramas muertas': 'deadBranches',
+      'ramas sobre extendidas': 'overExtendedBranches',
+      'rajaduras de rama': 'fissuresBranches',
+      'pudricion de madera en ramas': 'woodRot',
+      'interferencia con red electrica': 'interferenceWithTheElectricalGrid',
+    };
+
+    defects.forEach((defect) => {
+      const formControlName = defectMappings[defect.defectName];
+      if (formControlName) {
+        // Convert numeric value to string to match ion-select option values
+        this.treeForm
+          .get(formControlName)
+          ?.setValue(defect.defectValue.toString());
+
+        // Handle special cases with branches
+        if (
+          defect.branches &&
+          (formControlName === 'hangingOrBrokenBranches' ||
+            formControlName === 'deadBranches')
+        ) {
+          this.treeForm
+            .get(formControlName + '_branches')
+            ?.setValue(defect.branches);
+          (this as any)[formControlName + '_branches'] = true; // Enable branches input
+        }
+      }
+      // Handle special defects that don't map directly to standard form controls
+      if (defect.defectName === 'cavidades en tronco') {
+        this.treeForm.get('isCavitiesTrunk')?.setValue(true);
+        this.treeForm.get('cavitiesTrunk_t')?.setValue(defect.branches);
+      }
+      if (defect.defectName === 'corteza perdida o muerta') {
+        this.treeForm.get('isLostOrDeadBark')?.setValue(true);
+        this.treeForm.get('lostOrDeadBark_width')?.setValue(defect.branches);
+      }
+      if (defect.defectName === 'heridas de tronco') {
+        this.treeForm.get('isWounds')?.setValue(true);
+        this.treeForm.get('wounds_width')?.setValue(defect.branches);
+      }
+      if (defect.defectName === 'pudricion de madera en tronco') {
+        this.treeForm.get('isWoodRoot')?.setValue(true);
+        if (defect.textDefectValue === 'presencia de cuerpos fructiferos') {
+          this.treeForm.get('isWoodRoot_fruitingBodies')?.setValue(true);
+        } else {
+          this.treeForm.get('woodRoot_t')?.setValue(defect.branches);
+        }
+      }
+    });
   }
 }

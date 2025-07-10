@@ -16,7 +16,7 @@ export class DetailProjectComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private projectService: ProjectService,
-    private uiService: UiService,
+    private uiService: UiService
   ) {}
 
   async ngOnInit() {
@@ -42,17 +42,13 @@ export class DetailProjectComponent implements OnInit {
   }
   createTree() {
     this.router.navigate([
-      `/project/${this.idProject}/tree/${
-        this.project.projectType ? 'muestreo' : 'individual'
-      }/createtree/0`,
+      `/project/${this.idProject}/tree/${this.project.projectType}/createtree/0`,
     ]);
   }
 
   showAllTrees() {
     this.router.navigate([
-      `/project/${this.idProject}/tree/${
-        this.project.projectType ? 'muestreo' : 'individual'
-      }/listtree`,
+      `/project/${this.idProject}/tree/${this.project.projectType}/listtree`,
     ]);
   }
 }

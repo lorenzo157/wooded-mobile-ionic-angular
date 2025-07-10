@@ -38,4 +38,6 @@ export class ReadTreeDto {
   gender?: string;
   species?: string;
   scientificName?: string;
+  treeInfoCollectionTime?: string;
+  createdAt?: Date;
 }

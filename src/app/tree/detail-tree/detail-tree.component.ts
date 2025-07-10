@@ -19,13 +19,13 @@ export class DetailTreeComponent implements OnInit {
   defectDtoRoots!: any;
   defectDtoTrunk!: any;
   defectDtoBranches!: any;
-  projectType!: boolean;
+  projectType!: string | null;
 
   constructor(
     private route: ActivatedRoute,
     private treeService: TreeService,
     private uiService: UiService,
-    private router: Router,
+    private router: Router
   ) {}
 
   async ngOnInit() {
@@ -33,7 +33,7 @@ export class DetailTreeComponent implements OnInit {
     await this.route.paramMap.subscribe((params) => {
       this.idTree = +params.get('idTree')!;
       this.idProject = +params.get('idProject')!;
-      this.projectType = params.get('projectType') === 'muestreo';
+      this.projectType = params.get('projectType');
       this.loadTree();
     });
   }
@@ -49,13 +49,13 @@ export class DetailTreeComponent implements OnInit {
         this.tree.height = Number(Number(tree.height).toFixed(2));
         this.tree.incline = Number(Number(tree.incline).toFixed(2));
         this.defectDtoRoots = tree.readDefectDto.filter(
-          (defect) => defect.defectZone === 'raiz',
+          (defect) => defect.defectZone === 'raiz'
         );
         this.defectDtoTrunk = tree.readDefectDto.filter(
-          (defect) => defect.defectZone === 'tronco',
+          (defect) => defect.defectZone === 'tronco'
         );
         this.defectDtoBranches = tree.readDefectDto.filter(
-          (defect) => defect.defectZone === 'rama',
+          (defect) => defect.defectZone === 'rama'
         );
         console.log(this.tree.photoFileName);
       },
@@ -67,12 +67,12 @@ export class DetailTreeComponent implements OnInit {
   }
   updateTree() {
     this.router.navigate([
-      `/project/${this.idProject}/tree/${this.projectType ? 'muestreo' : 'individual'}/createtree/${this.idTree}`,
+      `/project/${this.idProject}/tree/${this.projectType}/createtree/${this.idTree}`,
     ]);
   }
   createTree() {
     this.router.navigate([
-      `/project/${this.idProject}/tree/${this.projectType ? 'muestreo' : 'individual'}/createtree/0`,
+      `/project/${this.idProject}/tree/${this.projectType}/createtree/0`,
     ]);
   }
 }

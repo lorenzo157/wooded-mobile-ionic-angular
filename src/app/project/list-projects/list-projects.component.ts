@@ -21,8 +21,8 @@ export class ListProjectsComponent implements OnInit {
     private uiService: UiService,
     private authService: AuthService,
   ) {
-    this.authService.getUserName().subscribe({
-      next: (firstName) => (this.firstName = firstName),
+    this.authService.getUser().subscribe({
+      next: (user) => (this.firstName = user.firstName),
       error: (error) => (this.firstName = 'Sin nombre'),
     });
   }

@@ -26,6 +26,12 @@
           ><strong>Nivel de riesgo:</strong> {{ tree.risk || "N/A" }}</ion-label
         >
       </ion-item>
+      <ion-item>
+        <ion-label
+          ><strong>Tiempo de relevo:</strong>
+          {{ tree.treeInfoCollectionTime || "N/A" }}</ion-label
+        >
+      </ion-item>
       <!-- Ubicacion -->
       <ion-card-header class="sub-title blue">
         <ion-card-title class="text-color-white"> Ubicación </ion-card-title>
@@ -256,6 +262,17 @@
             >
             <p>Descripción: {{ defect.textDefectValue }}</p>
             <p>Severidad: {{ defect.defectValue }}</p>
+            @if (defect.branches) {
+            <p>
+              {{
+                defect.defectName === "pudricion de madera en tronco" ||
+                defect.defectName === "cavidades en tronco"
+                  ? "Valor de t medido: "
+                  : "Perímetro afectado medido: "
+              }}
+              {{ defect.branches }}cm
+            </p>
+            }
           </ion-list>
         </ion-item>
         }
