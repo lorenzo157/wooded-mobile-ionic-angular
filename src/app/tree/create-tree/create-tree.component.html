@@ -12,7 +12,7 @@
   <ion-card>
     <form [formGroup]="treeForm" (ngSubmit)="onSubmit()">
       <ion-card-header class="sub-title blue">
-        <ion-card-title class="text-color-white"> Ubicación </ion-card-title>
+        <ion-card-title class="text-color-white">📌 Ubicación </ion-card-title>
       </ion-card-header>
       <!-- address -->
       <ion-item lines="none" [class.has-value]="hasValue('address')">
@@ -36,35 +36,30 @@
 
       <ion-row>
         <ion-col size="auto">
-          <ion-button (click)="takePhoto()">Tomar foto</ion-button>
+          <ion-button (click)="takePhoto()">Tomar foto 📸</ion-button>
         </ion-col>
-        <ion-col size="auto" *ngIf="treeForm.get('photoFileName')?.value">
-          <ion-button (click)="removePhoto()" color="danger" fill="outline">
+        <ion-col size="auto">
+          <ion-button  *ngIf="image" (click)="removePhoto()" color="danger" fill="outline">
             <ion-icon name="trash" slot="start"></ion-icon>
             Quitar foto
           </ion-button>
         </ion-col>
-        <ion-col>
-          <ion-item [class.has-value]="hasValue('photoFileName')">
-            <ion-input
-              [readonly]="true"
-              label="archivo"
-              labelPlacement="floating"
-              formControlName="photoFileName"
-            ></ion-input>
-          </ion-item>
-        </ion-col>
       </ion-row>
 
       <!-- Photo preview -->
-      <ion-card-content *ngIf="image">
-        <img [src]="image.dataUrl" alt="Foto del árbol" class="preview-image" />
+      <ion-card-content *ngIf="image || pathPhoto">
+        <img
+          [src]="image?.dataUrl || pathPhoto"
+          alt="Foto del árbol"
+          class="preview-image"
+        />
       </ion-card-content>
       <ion-item
         [class.has-value]="hasValue('latitude') || hasValue('longitude')"
       >
         <ion-label>Obtener posición actual</ion-label>
         <ion-checkbox
+          formControlName="useCurrentPosition"
           class="checkbox"
           (ionChange)="onTogglePosition($event)"
         ></ion-checkbox>
@@ -98,7 +93,7 @@
       }
       <ion-card-header class="sub-title green">
         <ion-card-title class="text-color-white">
-          Características del árbol
+          🌳 Características del árbol
         </ion-card-title>
       </ion-card-header>
       <!-- isMissing -->
@@ -138,7 +133,7 @@
         @if (showSuggestions && filteredTreeTypes.length > 0) {
         <ion-card class="autocomplete-suggestions">
           <ion-list>
-            @for (treeType of filteredTreeTypes; track treeType.name) {
+            @for (treeType of filteredTreeTypes; track treeType) {
             <ion-item
               button
               (click)="onTreeTypeSelect(treeType)"
@@ -175,6 +170,17 @@
             formControlName="perimeter"
           ></ion-input>
         </ion-item>
+        <!-- treeValue -->
+        <ion-item [class.has-value]="hasValue('treeValue')">
+          <ion-label position="floating">Valor del árbol</ion-label>
+          <ion-select formControlName="treeValue">
+            @for (option of treeValueOptions; track option) {
+            <ion-select-option [value]="option">
+              {{ option }}
+            </ion-select-option>
+            }
+          </ion-select>
+        </ion-item>
         <!-- incline -->
         <!-- <div>
             <p>{{tiltValues.x}}</p>
@@ -183,7 +189,7 @@
           </div> -->
         <div class="section">
           <ion-card-header>
-            <ion-card-title> Cálculo de inclinación </ion-card-title>
+            <ion-card-title> Cálculo de inclinación 📐 </ion-card-title>
           </ion-card-header>
           <ion-card-content>
             <tilt-measure (tiltChange)="onTiltChange($event)"></tilt-measure>
@@ -203,7 +209,7 @@
         <div class="section">
           <ion-card-header>
             <ion-card-title class="section-header">
-              Cálculo de altura
+               Cálculo de altura 📏
             </ion-card-title>
           </ion-card-header>
           <ion-card-content>
@@ -222,17 +228,6 @@
             </ion-item>
           </ion-card-content>
         </div>
-        <!-- treeValue -->
-        <ion-item [class.has-value]="hasValue('treeValue')">
-          <ion-label position="floating">Valor del árbol</ion-label>
-          <ion-select formControlName="treeValue">
-            @for (option of treeValueOptions; track option) {
-            <ion-select-option [value]="option">
-              {{ option }}
-            </ion-select-option>
-            }
-          </ion-select>
-        </ion-item>
         <!-- Pests Section -->
         <div formArrayName="pestsNames" class="manyToMany">
           @for (pest of pestsNames.controls; track pest; let i = $index) {
@@ -255,7 +250,7 @@
             (click)="addItem('pests')"
             expand="block"
             color="secondary"
-            >Agregar plaga</ion-button
+            >Agregar plaga 🐛</ion-button
           >
         </div>
         <!-- Diseases Section -->
@@ -281,12 +276,12 @@
             (click)="addItem('diseases')"
             expand="block"
             color="secondary"
-            >Agregar enfermedad</ion-button
+            >Agregar enfermedad 🤒</ion-button
           >
         </div>
         <ion-card-header class="sub-title yellow">
           <ion-card-title class="text-color-white">
-            Factores de carga
+            💨 Factores de carga
           </ion-card-title>
         </ion-card-header>
         <!-- Wind Exposure -->
@@ -324,7 +319,7 @@
         </ion-item>
         <ion-card-header class="sub-title violet">
           <ion-card-title class="text-color-white">
-            Condiciones del sitio
+            🌀 Condiciones del sitio
           </ion-card-title>
         </ion-card-header>
         <!-- Growth Space -->
@@ -349,47 +344,55 @@
           ></ion-checkbox>
         </ion-item>
         <!-- Conflict Section -->
-        <ion-item [class.has-value]="hasValue('conflictsNames')">
-          <ion-label position="stacked">Conflictos</ion-label>
-          <ion-select
-            formControlName="conflictsNames"
-            multiple="true"
-            okText="OK"
-            cancelText="Cancelar"
-            placeholder="seleccionar conflictos"
-          >
-            @for (option of conflictOptions; track option) {
-            <ion-select-option [value]="option">
-              {{ option }}
-            </ion-select-option>
-            }
-          </ion-select>
-        </ion-item>
-        <!-- List of selected conflicts -->
-        <ion-card-header>
-          <ion-card-title> Conflictos seleccionados </ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-          @if ( treeForm.get('conflictsNames')?.value?.length) {
-          <ion-list>
-            @for (conflict of treeForm.get('conflictsNames')?.value; track
-            conflict) {
-            <ion-item>
-              <ion-label>{{ conflict }}</ion-label>
+        <div class="section">
+          <ion-card-header>
+            <ion-card-title> Conflictos ⚠️</ion-card-title>
+          </ion-card-header>
+
+          <ion-card-content>
+            <ion-item [class.has-value]="hasValue('conflictsNames')">
+              <ion-select
+                formControlName="conflictsNames"
+                multiple="true"
+                okText="OK"
+                cancelText="Cancelar"
+                placeholder="seleccionar conflictos"
+              >
+                @for (option of conflictOptions; track option) {
+                <ion-select-option [value]="option">
+                  {{ option }}
+                </ion-select-option>
+                }
+              </ion-select>
             </ion-item>
+            <!-- List of selected conflicts -->
+
+            @if ( treeForm.get('conflictsNames')?.value?.length) {
+            <ion-item lines="none">
+              <ion-label>
+                <strong>Conflictos seleccionados:</strong>
+                <ul class="custom-list">
+                  @for (conflict of treeForm.get('conflictsNames')?.value; track
+                  conflict) {
+                  <li>{{ conflict }}</li>
+                  }
+                </ul>
+              </ion-label>
+            </ion-item>
+            } @else {
+            <ion-item
+              lines="none"
+              [class.has-value]="hasValue('nothingUnderTree')"
+              ><ion-label color="medium" class="text-color-light-gray"
+                >No hay conflictos seleccionados.</ion-label
+              ></ion-item
+            >
             }
-          </ion-list>
-          } @else {
-          <ion-item [class.has-value]="hasValue('nothingUnderTree')"
-            ><ion-label color="medium" class="text-color-light-gray"
-              >No hay conflictos seleccionados.</ion-label
-            ></ion-item
-          >
-          }
-        </ion-card-content>
+          </ion-card-content>
+        </div>
         <ion-card-header class="sub-title red">
           <ion-card-title class="text-color-white">
-            Blanco debajo del árbol
+            🎯 Blanco debajo del árbol
           </ion-card-title>
         </ion-card-header>
         <!-- nothingUnderTree -->
@@ -455,7 +458,7 @@
         <!-- Cuerpos fructíferos de hongos en cuello o raíces -->
         <ion-card-header class="sub-title orange">
           <ion-card-title class="text-color-white">
-            Defectos en las raíces
+            🌱 Defectos en raíces
           </ion-card-title>
         </ion-card-header>
         <ion-item
@@ -531,7 +534,7 @@
         </ion-item>
         <ion-card-header class="sub-title orange">
           <ion-card-title class="text-color-white">
-            Defectos en tronco y cuello
+            🌳 Defectos en tronco y cuello
           </ion-card-title>
         </ion-card-header>
         <ion-item [class.has-value]="hasValue('gallsTermiteMoundsAnthills')">
@@ -716,7 +719,7 @@
         </ion-item>
         <ion-card-header class="sub-title orange">
           <ion-card-title class="text-color-white">
-            Defectos en ramas estructurales y ramas menores
+            🌿 Defectos en ramas estructurales y ramas menores
           </ion-card-title>
         </ion-card-header>
         <ion-item [class.has-value]="hasValue('cankersBranch')">
@@ -879,16 +882,20 @@
             >
           </ion-select>
         </ion-item>
-        <!-- Summary of selected defects -->
+        <!-- Summary of selected defects by zones -->
         <ion-card-header class="sub-title brown">
           <ion-card-title class="text-color-white"
-            >Defectos seleccionados</ion-card-title
+            >Defectos seleccionados por zona</ion-card-title
           >
         </ion-card-header>
         <ion-card-content>
-          @if (selectedDefectsSummary.length > 0) {
+          <!-- Defectos en Raíces -->
+          @if (selectedDefectsRaiz.length > 0) {
+          <ion-card-header class="defect-zone-header">
+            <ion-card-title class="defect-zone-title">🌱 Defectos en Raíces</ion-card-title>
+          </ion-card-header>
           <ion-list>
-            @for (defect of selectedDefectsSummary; track defect) {
+            @for (defect of selectedDefectsRaiz; track defect) {
             <ion-row>
               <ion-col size="5">
                 <span class="defect-label">{{ defect.label }}</span>
@@ -899,7 +906,47 @@
             </ion-row>
             }
           </ion-list>
-          } @else {
+          }
+
+          <!-- Defectos en Tronco -->
+          @if (selectedDefectsTronco.length > 0) {
+          <ion-card-header class="defect-zone-header">
+            <ion-card-title class="defect-zone-title">🌳 Defectos en Tronco</ion-card-title>
+          </ion-card-header>
+          <ion-list>
+            @for (defect of selectedDefectsTronco; track defect) {
+            <ion-row>
+              <ion-col size="5">
+                <span class="defect-label">{{ defect.label }}</span>
+              </ion-col>
+              <ion-col size="6">
+                <span>{{ defect.value }}</span>
+              </ion-col>
+            </ion-row>
+            }
+          </ion-list>
+          }
+
+          <!-- Defectos en Ramas -->
+          @if (selectedDefectsRama.length > 0) {
+          <ion-card-header class="defect-zone-header">
+            <ion-card-title class="defect-zone-title">🌿 Defectos en Ramas</ion-card-title>
+          </ion-card-header>
+          <ion-list>
+            @for (defect of selectedDefectsRama; track defect) {
+            <ion-row>
+              <ion-col size="5">
+                <span class="defect-label">{{ defect.label }}</span>
+              </ion-col>
+              <ion-col size="6">
+                <span>{{ defect.value }}</span>
+              </ion-col>
+            </ion-row>
+            }
+          </ion-list>
+          }
+
+          @if (selectedDefectsRaiz.length === 0 && selectedDefectsTronco.length === 0 && selectedDefectsRama.length === 0) {
           <ion-item>
             <ion-label color="medium" class="text-color-light-gray"
               >No hay defectos de riesgo seleccionados.</ion-label
@@ -912,14 +959,14 @@
       <!-- Intervention Section -->
       <ion-card-header class="sub-title gray">
         <ion-card-title class="text-color-white">
-          Mitigación del riesgo/acciones correctivas
+          🛠️ Mitigación del riesgo/acciones correctivas
         </ion-card-title>
       </ion-card-header>
       <!-- potentialDamage -->
 
       <ion-item [class.has-value]="hasValue('potentialDamage')">
         <ion-label position="floating"
-          >Potencial de daño del árbol o rama si se cae</ion-label
+          >☠️ Potencial de daño del árbol o rama en caso de caerse</ion-label
         >
         <ion-select formControlName="potentialDamage">
           @for (option of potentialDamageOptions; track option; let i = $index)
@@ -932,50 +979,55 @@
       </ion-item>
 
       <!-- Intervention Section -->
-      <ion-item [class.has-value]="hasValue('interventionsNames')">
-        <ion-label position="stacked">Intervenciones</ion-label>
-        <ion-select
-          formControlName="interventionsNames"
-          multiple="true"
-          okText="OK"
-          cancelText="Cancelar"
-          placeholder="seleccionar intervención"
-        >
-          @for (option of interventionOptions; track option) {
-          <ion-select-option [value]="option">
-            {{ option }}
-          </ion-select-option>
-          }
-        </ion-select>
-      </ion-item>
+      <div class="section">
+        <ion-card-header>
+          <ion-card-title>👷 Intervenciones </ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-item [class.has-value]="hasValue('interventionsNames')">
+            <ion-select
+              formControlName="interventionsNames"
+              multiple="true"
+              okText="OK"
+              cancelText="Cancelar"
+              placeholder="seleccionar intervención"
+            >
+              @for (option of interventionOptions; track option) {
+              <ion-select-option [value]="option">
+                {{ option }}
+              </ion-select-option>
+              }
+            </ion-select>
+          </ion-item>
 
-      <!-- List of selected interventions -->
-      <ion-card-header>
-        <ion-card-title> Intervenciones seleccionadas </ion-card-title>
-      </ion-card-header>
-      <ion-card-content>
-        @if ( treeForm.get('interventionsNames')?.value?.length) {
-        <ion-list>
-          @for ( intervention of treeForm.get('interventionsNames')?.value ;
-          track intervention) {
-          <ion-item>
-            <ion-label>{{ intervention }}</ion-label>
+          <!-- List of selected interventions -->
+
+          @if ( treeForm.get('interventionsNames')?.value?.length) {
+          <ion-item lines="none">
+            <ion-label>
+              <strong>Intervenciones seleccionadas:</strong>
+              <ul class="custom-list">
+                @for ( intervention of treeForm.get('interventionsNames')?.value
+                ; track intervention) {
+                <li>{{ intervention }}</li>
+                }
+              </ul>
+            </ion-label>
+          </ion-item>
+          } @else {
+          <ion-item lines="none">
+            <ion-label color="medium" class="text-color-light-gray"
+              >No hay intervenciones seleccionadas.</ion-label
+            >
           </ion-item>
           }
-        </ion-list>
-        } @else {
-        <ion-item>
-          <ion-label color="medium" class="text-color-light-gray"
-            >No hay intervenciones seleccionadas.</ion-label
-          >
-        </ion-item>
-        }
-      </ion-card-content>
+        </ion-card-content>
+      </div>
       } @if ( treeForm.get('isMissing')?.value || treeForm.get('isDead')?.value
       ) {
       <ion-card-header class="sub-title gray">
         <ion-card-title class="text-color-white">
-          Mitigación del riesgo/acciones correctivas
+          🛠️ Mitigación del riesgo/acciones correctivas
         </ion-card-title>
       </ion-card-header>
       <ion-item>

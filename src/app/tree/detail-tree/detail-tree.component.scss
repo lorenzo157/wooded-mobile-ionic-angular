@@ -5,3 +5,14 @@
 }
 
 /* Subclasses extending .sub-title with specific background gradients */
+
+/* Custom list styling for better presentation */
+.custom-list {
+  margin: 8px 0;
+  padding-left: 20px;
+
+  li {
+    margin: 4px 0;
+    color: var(--ion-color-dark);
+  }
+}

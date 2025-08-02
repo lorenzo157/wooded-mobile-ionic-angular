@@ -12,10 +12,10 @@
     </ion-card-header>
     <ion-card-content>
       <!-- Image Section -->
-      @if (tree.photoFileName) {
+      @if (tree.pathPhoto) {
       <ion-item lines="none">
         <img
-          [src]="tree.photoFileName"
+          [src]="tree.pathPhoto"
           alt="Sin foto o ingrese mas tarde para visualizarla si el árbol es recien creado o actualizado"
         />
       </ion-item>
@@ -128,17 +128,25 @@
         </ion-item>
         @if (tree.diseasesNames.length > 0) {
         <ion-item>
-          <ion-label
-            ><strong>Enfermedades:</strong>
-            {{ tree.diseasesNames.join(", ") }}</ion-label
-          >
+          <ion-label>
+            <strong>Enfermedades:</strong>
+            <ul class="custom-list">
+              @for (disease of tree.diseasesNames; track disease) {
+              <li>{{ disease }}</li>
+              }
+            </ul>
+          </ion-label>
         </ion-item>
         } @if (tree.pestsNames.length > 0) {
         <ion-item>
-          <ion-label
-            ><strong>Plagas:</strong>
-            {{ tree.pestsNames.join(", ") }}</ion-label
-          >
+          <ion-label>
+            <strong>Plagas:</strong>
+            <ul class="custom-list">
+              @for (pest of tree.pestsNames; track pest) {
+              <li>{{ pest }}</li>
+              }
+            </ul>
+          </ion-label>
         </ion-item>
         }
         <ion-item>
@@ -178,10 +186,14 @@
         </ion-card-header>
         @if (tree.conflictsNames.length > 0) {
         <ion-item>
-          <ion-label
-            ><strong>Conflcitos:</strong>
-            {{ tree.conflictsNames.join(", ") }}</ion-label
-          >
+          <ion-label>
+            <strong>Conflictos:</strong>
+            <ul class="custom-list">
+              @for (conflict of tree.conflictsNames; track conflict) {
+              <li>{{ conflict }}</li>
+              }
+            </ul>
+          </ion-label>
         </ion-item>
         }
         <ion-item>
@@ -291,7 +303,7 @@
             <p>Descripción: {{ defect.textDefectValue }}</p>
             <p>Severidad: {{ defect.defectValue }}</p>
             @if (defect.branches) {
-            <p>Ramas afectadas {{ defect.branches }}</p>
+            <p>Ramas afectadas: {{ defect.branches }}</p>
             }
           </ion-list>
         </ion-item>
@@ -312,10 +324,14 @@
       </ion-item>
       @if (tree.interventionsNames.length > 0) {
       <ion-item>
-        <ion-label
-          ><strong>Intervenciones a aplicar:</strong>
-          {{ tree.interventionsNames.join(", ") }}</ion-label
-        >
+        <ion-label>
+          <strong>Intervenciones a aplicar:</strong>
+          <ul class="custom-list">
+            @for (intervention of tree.interventionsNames; track intervention) {
+            <li>{{ intervention }}</li>
+            }
+          </ul>
+        </ion-label>
       </ion-item>
       }
     </ion-card-content>
@@ -326,8 +342,8 @@
     </ion-button>
   </ion-row>
   <ion-row class="ion-justify-content-center button-container">
-    <ion-button expand="block" color="primary" (click)="createTree()">
-      Registrar un nuevo árbol
+    <ion-button expand="block" color="secondary" (click)="createTree()">
+      Registrar un nuevo árbol 🌳➕
     </ion-button>
   </ion-row>
 </ion-content>

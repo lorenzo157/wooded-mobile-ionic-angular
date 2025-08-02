@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { debounceTime } from 'rxjs/operators';
-import { TreeService, NumberToStringMap } from '../tree.service';
+import { TreeService } from '../tree.service';
+import { Location } from '@angular/common';
 import { CreateTreeDto } from '../dto/create-tree.dto';
 import { ReadTreeDto } from '../dto/read-tree.dto';
 import { ActivatedRoute } from '@angular/router';
@@ -108,7 +109,10 @@ export class CreateTreeComponent implements OnInit {
   interferenceWithTheElectricalGridEntries = Object.entries(
     interferenceWithTheElectricalGrid
   );
-  selectedDefectsSummary: { label: string; value: string }[] = [];
+  // Zone-based defect arrays
+  selectedDefectsRaiz: { label: string; value: string }[] = [];
+  selectedDefectsTronco: { label: string; value: string }[] = [];
+  selectedDefectsRama: { label: string; value: string }[] = [];
   private idProject!: number;
   idTree: number | null = null;
   projectType!: string | null;
@@ -122,6 +126,7 @@ export class CreateTreeComponent implements OnInit {
   tiltValues = { angle: 0, x: 0, y: 0, z: 0 };
   heightValues = { height: 0, x: 0, y: 0, z: 0 };
   height: number = 0;
+  pathPhoto: string = '';
 
   onTiltChange(event: { angle: number; x: number; y: number; z: number }) {
     this.tiltValues = event;
@@ -139,10 +144,10 @@ export class CreateTreeComponent implements OnInit {
     private router: Router,
     private fb: FormBuilder,
     private uiService: UiService,
-    private http: HttpClient
+    private http: HttpClient,
+    private location: Location
   ) {
     this.treeForm = this.fb.group({
-      photoFileName: [null],
       cityBlock: [null],
       perimeter: [null, Validators.required],
       height: [null, Validators.required],
@@ -163,6 +168,7 @@ export class CreateTreeComponent implements OnInit {
       growthSpace: [null, Validators.required],
       treeValue: [null, Validators.required],
       address: ['', Validators.required],
+      useCurrentPosition: [false],
       latitude: [null, Validators.required],
       longitude: [null, Validators.required],
       treeTypeName: [null, Validators.required],
@@ -212,14 +218,6 @@ export class CreateTreeComponent implements OnInit {
       this.operation = this.idTree ? 'Actualización' : 'Registración';
       console.log(this.idTree);
     });
-
-    if (this.projectType === 'muestreo') {
-      this.treeForm.get('treeValue')?.clearValidators();
-      this.treeForm.get('treeValue')?.updateValueAndValidity();
-    } else {
-      this.treeForm.get('treesInTheBlock')?.clearValidators();
-      this.treeForm.get('treesInTheBlock')?.updateValueAndValidity();
-    }
 
     this.treeForm.valueChanges.pipe(debounceTime(100)).subscribe(() => {
       this.updateSelectedDefectsSummary();
@@ -354,14 +352,11 @@ export class CreateTreeComponent implements OnInit {
       'perimeter',
       'height',
       'incline',
-      'useUnderTheTree',
-      'frequencyUse',
       'potentialDamage',
       'windExposure',
       'vigor',
       'canopyDensity',
       'growthSpace',
-      'treeValue',
       'treeTypeName',
     ];
     fieldsToValidate.forEach((field) => {
@@ -373,6 +368,27 @@ export class CreateTreeComponent implements OnInit {
       }
       control?.updateValueAndValidity();
     });
+
+    this.treeForm
+      .get('nothingUnderTree')
+      ?.setValue(this.treeForm.get('nothingUnderTree'));
+
+    if (condition) {
+      this.treeForm.get('treeValue')?.clearValidators();
+      this.treeForm.get('treesInTheBlock')?.clearValidators();
+    } else {
+      if (this.projectType === 'muestreo') {
+        this.treeForm.get('treeValue')?.clearValidators();
+        this.treeForm
+          .get('treesInTheBlock')
+          ?.setValidators([Validators.required]);
+      } else {
+        this.treeForm.get('treesInTheBlock')?.clearValidators();
+        this.treeForm.get('treeValue')?.setValidators([Validators.required]);
+      }
+    }
+    this.treeForm.get('treeValue')?.updateValueAndValidity();
+    this.treeForm.get('treesInTheBlock')?.updateValueAndValidity();
   }
 
   async getLocation() {
@@ -448,9 +464,6 @@ export class CreateTreeComponent implements OnInit {
         resultType: CameraResultType.DataUrl,
         source: CameraSource.Camera,
       });
-      this.treeForm
-        .get('photoFileName')
-        ?.setValue(`tree_${Date.now() - 1750000000000}.jpg`);
     } catch (error) {
       this.uiService.alert('Error al tomar la foto', 'Error');
     }
@@ -458,7 +471,6 @@ export class CreateTreeComponent implements OnInit {
 
   removePhoto() {
     this.image = null;
-    this.treeForm.get('photoFileName')?.setValue(null);
   }
 
   async onSubmit() {
@@ -492,7 +504,6 @@ export class CreateTreeComponent implements OnInit {
     newTree.isMissing = this.treeForm.get('isMissing')?.value;
     newTree.isDead = this.treeForm.get('isDead')?.value;
     newTree.projectId = this.idProject;
-    newTree.photoFileName = this.treeForm.get('photoFileName')?.value;
     newTree.cityBlock = this.treeForm.get('cityBlock')?.value;
     newTree.address = this.treeForm.get('address')?.value;
     newTree.latitude = this.treeForm.get('latitude')?.value;
@@ -795,145 +806,229 @@ export class CreateTreeComponent implements OnInit {
       );
     } // end if
 
-    if (this.image && !this.image.dataUrl.includes(newTree.photoFileName))
-      newTree.photoFile = this.image.dataUrl?.split(',')[1];
+    if (this.image) newTree.photoFile = this.image.dataUrl?.split(',')[1];
     console.log('newTree', newTree);
     this.treeService.createOrUpdateTree(newTree, this.idTree).subscribe({
       next: (idTree) => {
-        this.uiService.alert(`${this.operation} exitosa`, 'Éxito');
-        this.router.navigate(
-          [
-            `/project/${this.idProject}/tree/${this.projectType}/detailtree/${idTree}`,
-          ],
-          { replaceUrl: true }
-        );
+        if (this.idTree) {
+          this.location.back();
+        } else {
+          this.router.navigate(
+            [
+              `/project/${this.idProject}/tree/${this.projectType}/detailtree/${idTree}`,
+            ],
+            { replaceUrl: true }
+          );
+        }
+        this.uiService.alert(`${this.operation} exitosa ✅`, 'Éxito');
       },
       error: () => this.uiService.alert(this.operation + ' fallida', 'Error'),
     });
   }
 
   private updateSelectedDefectsSummary(): void {
-    const summary: { label: string; value: string }[] = [];
+    const raizDefects: { label: string; value: string }[] = [];
+    const troncoDefects: { label: string; value: string }[] = [];
+    const ramaDefects: { label: string; value: string }[] = [];
 
     const defectFields = [
+      // DEFECTOS EN RAÍCES
       {
         control: 'fruitingBodiesOfFungiOnNeckOrRoots',
         entries: this.fruitingBodiesOfFungiOnNeckOrRootsEntries,
         label: 'Cuerpos fructíferos de hongos en cuello o raíces',
+        zone: 'raiz',
       },
       {
         control: 'mechanicalDamageToRoots',
         entries: this.mechanicalDamageToRootsEntries,
         label: 'Daño mecánico a raíces',
+        zone: 'raiz',
       },
       {
         control: 'stranglingRoots',
         entries: this.stranglingRootsEntries,
         label: 'Raíces estrangulantes',
+        zone: 'raiz',
       },
       {
         control: 'deadRoots',
         entries: this.deadRootsEntries,
         label: 'Raíces muertas',
+        zone: 'raiz',
       },
       {
         control: 'symptomsDiseaseOfRootsInCrown',
         entries: this.symptomsDiseaseOfRootsInCrownEntries,
         label: 'Síntomas de enfermedad radicular en copa',
+        zone: 'raiz',
       },
+      // DEFECTOS EN TRONCO
       {
         control: 'gallsTermiteMoundsAnthills',
         entries: this.gallsTermiteMoundsAnthillsEntries,
         label: 'Agallas, termiteros, hormigueros',
+        zone: 'tronco',
       },
       {
         control: 'cankersTrunk',
         entries: this.cankersTrunkEntries,
         label: 'Cancros de tronco o cuello',
+        zone: 'tronco',
       },
       {
         control: 'multipleTrunks',
         entries: this.multipleTrunksEntries,
         label: 'Fustes múltiples',
+        zone: 'tronco',
       },
       {
         control: 'forkTrunk',
         entries: this.forkTrunkEntries,
         label: 'Horqueta de tronco',
+        zone: 'tronco',
       },
       {
         control: 'fissuresTrunk',
         entries: this.fissuresTrunkEntries,
         label: 'Rajaduras de tronco',
+        zone: 'tronco',
       },
+      // DEFECTOS EN RAMAS
       {
         control: 'cankersBranch',
         entries: this.cankersBranchEntries,
         label: 'Cancros de ramas',
+        zone: 'rama',
       },
       {
         control: 'cavitiesBranches',
         entries: this.cavitiesBranchesEntries,
         label: 'Cavidades en ramas',
+        zone: 'rama',
       },
       {
         control: 'fruitingBodiesOfFungi',
         entries: this.fruitingBodiesOfFungiEntries,
         label: 'Cuerpos fructíferos de hongos en ramas',
+        zone: 'rama',
       },
       {
         control: 'forkBranch',
         entries: this.forkBranchEntries,
         label: 'Horqueta de ramas',
+        zone: 'rama',
       },
       {
         control: 'hangingOrBrokenBranches',
         entries: this.hangingOrBrokenBranchesEntries,
         label: 'Ramas colgantes o quebradas',
+        zone: 'rama',
       },
       {
         control: 'deadBranches',
         entries: this.deadBranchesEntries,
         label: 'Ramas muertas',
+        zone: 'rama',
       },
       {
         control: 'overExtendedBranches',
         entries: this.overExtendedBranchesEntries,
         label: 'Ramas sobre extendidas',
+        zone: 'rama',
       },
       {
         control: 'fissuresBranches',
         entries: this.fissuresBranchesEntries,
-        label: 'Rajaduras',
+        label: 'Rajaduras de ramas',
+        zone: 'rama',
       },
       {
         control: 'woodRot',
         entries: this.woodRotEntries,
         label: 'Pudrición de madera',
+        zone: 'rama',
       },
       {
         control: 'interferenceWithTheElectricalGrid',
         entries: this.interferenceWithTheElectricalGridEntries,
         label: 'Interferencia con red eléctrica',
+        zone: 'rama',
       },
     ];
 
+    // Process each defect field and assign to the appropriate zone
     for (const field of defectFields) {
       const value = this.treeForm.get(field.control)?.value;
       if (value) {
         const entry = field.entries.find(([key]) => key == value);
         if (entry) {
-          summary.push({ label: field.label, value: entry[1] });
+          let defectValue = entry[1];
+
+          // For branch-related defects, append the count if available
+          if (
+            field.control === 'hangingOrBrokenBranches' &&
+            this.hangingOrBrokenBranches_branches &&
+            this.treeForm.get('hangingOrBrokenBranches_branches')?.value
+          ) {
+            defectValue += ` (${
+              this.treeForm.get('hangingOrBrokenBranches_branches')?.value
+            })`;
+          } else if (
+            field.control === 'deadBranches' &&
+            this.deadBranches_branches &&
+            this.treeForm.get('deadBranches_branches')?.value
+          ) {
+            defectValue += ` (${
+              this.treeForm.get('deadBranches_branches')?.value
+            })`;
+          }
+
+          const defectItem = { label: field.label, value: defectValue };
+
+          switch (field.zone) {
+            case 'raiz':
+              raizDefects.push(defectItem);
+              break;
+            case 'tronco':
+              troncoDefects.push(defectItem);
+              break;
+            case 'rama':
+              ramaDefects.push(defectItem);
+              break;
+          }
         }
       }
     }
 
-    // Special cases for checkboxes and inputs
+    // Special cases for checkboxes and inputs - assign to appropriate zones
+
+    // Incline defect (tronco zone)
+    const inclineValue = this.treeForm.get('incline')?.value;
+    if (inclineValue) {
+      let inclineDefectValue = 1;
+
+      if (inclineValue >= 10 && inclineValue < 20) {
+        inclineDefectValue = 2;
+      } else if (inclineValue >= 20 && inclineValue < 30) {
+        inclineDefectValue = 3;
+      } else if (inclineValue >= 30) {
+        inclineDefectValue = 4;
+      }
+
+      if (inclineDefectValue > 1) {
+        troncoDefects.push({
+          label: 'Inclinación',
+          value: `${inclineValue}° - riesgo: ${inclineDefectValue}`,
+        });
+      }
+    }
+
     if (
       this.treeForm.get('isCavitiesTrunk')?.value &&
       this.treeForm.get('cavitiesTrunk_t')?.value
     ) {
-      summary.push({
+      troncoDefects.push({
         label: 'Cavidades en tronco',
         value: 't = ' + this.treeForm.get('cavitiesTrunk_t')?.value,
       });
@@ -942,7 +1037,7 @@ export class CreateTreeComponent implements OnInit {
       this.treeForm.get('isLostOrDeadBark')?.value &&
       this.treeForm.get('lostOrDeadBark_width')?.value
     ) {
-      summary.push({
+      troncoDefects.push({
         label: 'Corteza pérdida o muerta',
         value: 'ancho = ' + this.treeForm.get('lostOrDeadBark_width')?.value,
       });
@@ -951,44 +1046,52 @@ export class CreateTreeComponent implements OnInit {
       this.treeForm.get('isWounds')?.value &&
       this.treeForm.get('wounds_width')?.value
     ) {
-      summary.push({
+      troncoDefects.push({
         label: 'Heridas en el tronco',
         value: 'ancho = ' + this.treeForm.get('wounds_width')?.value,
       });
     }
     if (this.treeForm.get('isWoodRoot')?.value) {
       if (this.treeForm.get('isWoodRoot_fruitingBodies')?.value) {
-        summary.push({
+        troncoDefects.push({
           label: 'Pudrición de madera',
           value: 'con cuerpos fructíferos',
         });
       } else if (this.treeForm.get('woodRoot_t')?.value) {
-        summary.push({
+        troncoDefects.push({
           label: 'Pudrición de madera',
           value: 't = ' + this.treeForm.get('woodRoot_t')?.value,
         });
       }
     }
-    if (
-      this.hangingOrBrokenBranches_branches &&
-      this.treeForm.get('hangingOrBrokenBranches_branches')?.value
-    ) {
-      summary.push({
-        label: 'Número de ramas colgantes o quebradas',
-        value: this.treeForm.get('hangingOrBrokenBranches_branches')?.value,
-      });
-    }
-    if (
-      this.deadBranches_branches &&
-      this.treeForm.get('deadBranches_branches')?.value
-    ) {
-      summary.push({
-        label: 'Número de ramas muertas',
-        value: this.treeForm.get('deadBranches_branches')?.value,
-      });
+
+    // Slenderness coefficient defect (tronco zone)
+    const heightValue = this.treeForm.get('height')?.value;
+
+    if (heightValue && this.dch) {
+      const slendernessCoefficent_number = heightValue / this.dch;
+      let slendernessDefectValue = 1;
+
+      if (slendernessCoefficent_number > 60 && slendernessCoefficent_number <= 80) {
+        slendernessDefectValue = 2;
+      } else if (slendernessCoefficent_number > 80 && slendernessCoefficent_number <= 100) {
+        slendernessDefectValue = 3;
+      } else if (slendernessCoefficent_number > 100) {
+        slendernessDefectValue = 4;
+      }
+
+      if (slendernessDefectValue > 1) {
+        troncoDefects.push({
+          label: 'Coeficiente de esbeltez',
+          value: `${slendernessCoefficent_number.toFixed(1)} - riesgo: ${slendernessDefectValue}`,
+        });
+      }
     }
 
-    this.selectedDefectsSummary = summary;
+    // Update zone-specific arrays
+    this.selectedDefectsRaiz = raizDefects;
+    this.selectedDefectsTronco = troncoDefects;
+    this.selectedDefectsRama = ramaDefects;
   }
 
   // Helper method to check if a form control has a value (not null, undefined, empty string, or false for checkboxes)
@@ -1045,13 +1148,13 @@ export class CreateTreeComponent implements OnInit {
     // Basic form fields
     this.treeForm.patchValue({
       cityBlock: tree.cityBlock,
-      perimeter: tree.perimeter,
-      height: tree.height,
-      incline: tree.incline,
+      perimeter: +tree.perimeter,
+      height: +tree.height,
+      incline: +tree.incline,
       treesInTheBlock: tree.treesInTheBlock,
       useUnderTheTree: tree.useUnderTheTree,
-      frequencyUse: tree.frequencyUse,
-      potentialDamage: tree.potentialDamage,
+      frequencyUse: +tree.frequencyUse,
+      potentialDamage: +tree.potentialDamage,
       isMovable: tree.isMovable,
       isRestrictable: tree.isRestrictable,
       isMissing: tree.isMissing,
@@ -1063,8 +1166,9 @@ export class CreateTreeComponent implements OnInit {
       growthSpace: tree.growthSpace,
       treeValue: tree.treeValue,
       address: tree.address,
-      latitude: tree.latitude,
-      longitude: tree.longitude,
+      latitude: +tree.latitude,
+      longitude: +tree.longitude,
+      useCurrentPosition: !!(tree.latitude && tree.longitude),
       treeTypeName: tree.treeTypeName,
       nothingUnderTree: !tree.useUnderTheTree,
       conflictsNames: tree.conflictsNames || [],
@@ -1079,15 +1183,17 @@ export class CreateTreeComponent implements OnInit {
         this.selectedTreeType = foundTreeType;
       }
     }
+    if (!tree.useUnderTheTree) {
+      this.treeForm.get('useUnderTheTree')?.clearValidators();
+      this.treeForm.get('useUnderTheTree')?.updateValueAndValidity();
+      this.treeForm.get('frequencyUse')?.clearValidators();
+      this.treeForm.get('frequencyUse')?.updateValueAndValidity();
+    }
+
     // Handle photo
-    if (tree.photoFileName) {
+    if (tree.pathPhoto) {
       // Store the existing photo filename
-      this.treeForm.get('photoFileName')?.setValue(tree.photoFileName);
-      this.image = {
-        dataUrl:
-          'https://woodedbucket.s3.us-east-1.amazonaws.com/trees_photos/' +
-          tree.photoFileName,
-      };
+      this.pathPhoto = tree.pathPhoto;
     }
     // Handle FormArrays
     tree.diseasesNames.forEach((value) => {
@@ -1105,10 +1211,6 @@ export class CreateTreeComponent implements OnInit {
   }
 
   private populateDefectsFromReadDefectDto(defects: ReadDefectTreeDto[]) {
-    console.log(
-      '🚀 ~ CreateTreeComponent ~ populateDefectsFromReadDefectDto ~ defects:',
-      defects
-    );
     // Map defect names to form control names
     const defectMappings: { [key: string]: string } = {
       'cuerpos fructiferos de hongos en raices':

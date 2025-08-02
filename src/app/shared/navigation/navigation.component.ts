@@ -25,7 +25,7 @@ export class NavigationComponent {
     console.log(currentRoute);
     if (this.router.url.includes('/createtree/')) {
       // only apply for create or edit tree routes
-      await this.uiService.alert('¿Volver a la pantalla anterior?', '', [
+      await this.uiService.alert('¿Seguro que quieres volver? Los datos ingresados se perderán', '⚠️', [
         {
           text: 'Cancelar',
           role: 'cancel',

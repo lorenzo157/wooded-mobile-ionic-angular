@@ -11,8 +11,7 @@ import { UiService } from '../../utils/ui.service';
   standalone: false,
 })
 export class DetailTreeComponent implements OnInit {
-  urlAWSCloudBucket: string =
-    'https://woodedbucket.s3.us-east-1.amazonaws.com/trees_photos/';
+
   idTree!: number;
   idProject!: number;
   tree!: ReadTreeDto;
@@ -43,8 +42,6 @@ export class DetailTreeComponent implements OnInit {
       next: (tree) => {
         this.uiService.cargando(false);
         this.tree = tree; // Load tree details
-        this.tree.photoFileName =
-          this.urlAWSCloudBucket + this.tree.photoFileName;
         this.tree.perimeter = Number(Number(tree.perimeter).toFixed(2));
         this.tree.height = Number(Number(tree.height).toFixed(2));
         this.tree.incline = Number(Number(tree.incline).toFixed(2));
@@ -57,7 +54,7 @@ export class DetailTreeComponent implements OnInit {
         this.defectDtoBranches = tree.readDefectDto.filter(
           (defect) => defect.defectZone === 'rama'
         );
-        console.log(this.tree.photoFileName);
+        console.log(this.tree.pathPhoto);
       },
       error: (error) => {
         this.uiService.alert('No se pudo cargar el árbol.', 'Error');
