@@ -10,70 +10,122 @@
 </ion-header>
 
 <ion-content class="ion-padding login-bg">
-    <ion-row class="ion-justify-content-center ion-align-items-center" style="height: 100%;">
-      <ion-col size="12" size-md="6" size-lg="4">
-        <ion-card class="ion-padding">
-          <ion-card-header>
-            <ion-img src="assets/logo.png" style="width: 100px; margin: 0 auto 16px auto; display: block;"></ion-img>
-            <ion-card-title class="ion-text-center" style="font-size: 1.5rem; margin-bottom: 8px;">
-              ¡Bienvenido!
-            </ion-card-title>
-            <ion-card-subtitle class="ion-text-center" style="margin-bottom: 8px;">
-              Inicia sesión para continuar
-            </ion-card-subtitle>
-          </ion-card-header>
-          <ion-card-content>
-            <form (ngSubmit)="onLogin()" [formGroup]="loginForm" autocomplete="off">
-              <ion-item lines="full">
-                <ion-icon name="mail-outline" slot="start"></ion-icon>
-                <ion-label position="floating">Correo electrónico</ion-label>
-                <ion-input
-                  formControlName="email"
-                  type="email"
-                  required
-                  autocomplete="username"
-                ></ion-input>
-              </ion-item>
-              <ion-text color="danger" *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
-                <p class="ion-padding-start">Correo inválido</p>
-              </ion-text>
+  <ion-row
+    class="ion-justify-content-center ion-align-items-center"
+    style="height: 100%"
+  >
+    <ion-col size="12" size-md="6" size-lg="4">
+      <ion-card class="ion-padding">
+        <ion-card-header>
+          <ion-img
+            src="./assets/logo.png"
+            style="width: 100px; margin: 0 auto 16px auto; display: block"
+          ></ion-img>
+          <ion-card-title
+            class="ion-text-center"
+            style="
+              font-size: 2rem;
+              margin-bottom: 4px;
+              color: green;
+              font-weight: 600;
+            "
+          >
+            Yvira
+          </ion-card-title>
+          <ion-card-subtitle
+            class="ion-text-center"
+            style="
+              font-size: 1.2rem;
+              margin-bottom: 8px;
+              color: var(--ion-color-medium);
+            "
+          >
+            ¡Bienvenido!
+          </ion-card-subtitle>
+        </ion-card-header>
+        <ion-card-content>
+          <form
+            (ngSubmit)="onLogin()"
+            [formGroup]="loginForm"
+            autocomplete="off"
+          >
+            <ion-item lines="full">
+              <ion-icon name="mail-outline" slot="start"></ion-icon>
+              <ion-label position="floating">Correo electrónico</ion-label>
+              <ion-input
+                formControlName="email"
+                type="email"
+                required
+                autocomplete="username"
+              ></ion-input>
+            </ion-item>
+            <ion-text
+              color="danger"
+              *ngIf="
+                loginForm.get('email')?.invalid &&
+                loginForm.get('email')?.touched
+              "
+            >
+              <p class="ion-padding-start">Correo inválido</p>
+            </ion-text>
 
-              <ion-item lines="full" class="ion-margin-top">
-                <ion-icon name="lock-closed-outline" slot="start"></ion-icon>
-                <ion-label position="floating">Contraseña</ion-label>
-                <ion-input
-                  [type]="showPassword ? 'text' : 'password'"
-                  formControlName="password"
-                  required
-                  autocomplete="current-password"
-                ></ion-input>
-                <ion-button fill="clear" slot="end" size="small" type="button" (click)="togglePasswordVisibility()">
-                  <ion-icon [name]="showPassword ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+            <ion-item lines="full" class="ion-margin-top">
+              <ion-icon name="lock-closed-outline" slot="start"></ion-icon>
+              <ion-label position="floating">Contraseña</ion-label>
+              <ion-input
+                [type]="showPassword ? 'text' : 'password'"
+                formControlName="password"
+                required
+                autocomplete="current-password"
+              ></ion-input>
+              <ion-button
+                fill="clear"
+                slot="end"
+                size="small"
+                type="button"
+                (click)="togglePasswordVisibility()"
+              >
+                <ion-icon
+                  [name]="showPassword ? 'eye-off-outline' : 'eye-outline'"
+                ></ion-icon>
+              </ion-button>
+            </ion-item>
+            <ion-text
+              color="danger"
+              *ngIf="
+                loginForm.get('password')?.invalid &&
+                loginForm.get('password')?.touched
+              "
+            >
+              <p class="ion-padding-start">Contraseña requerida</p>
+            </ion-text>
+
+            <ion-row
+              class="ion-justify-content-between ion-align-items-center ion-margin-top"
+            >
+              <ion-col size="6" class="ion-padding-end">
+                <ion-button
+                  fill="clear"
+                  size="small"
+                  color="primary"
+                  (click)="onForgotPassword()"
+                >
+                  ¿Olvidaste tu contraseña?
                 </ion-button>
-              </ion-item>
-              <ion-text color="danger" *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
-                <p class="ion-padding-start">Contraseña requerida</p>
-              </ion-text>
-
-              <ion-row class="ion-justify-content-between ion-align-items-center ion-margin-top">
-                <ion-col size="6">
-                  <ion-button fill="clear" size="small" color="primary" (click)="onForgotPassword()">
-                    ¿Olvidaste tu contraseña?
-                  </ion-button>
-                </ion-col>
-                <ion-col size="6" class="ion-text-right">
-                  <ion-button
-                    expand="block"
-                    type="submit"
-                    [disabled]="loginForm.invalid"
-                  >
-                    Iniciar sesión
-                  </ion-button>
-                </ion-col>
-              </ion-row>
-            </form>
-          </ion-card-content>
-        </ion-card>
-      </ion-col>
-    </ion-row>
+              </ion-col>
+              <ion-col size="6" class="ion-text-right ion-padding-start">
+                <ion-button
+                  expand="block"
+                  type="submit"
+                  [disabled]="loginForm.invalid"
+                >
+                  Iniciar sesión
+                </ion-button>
+              </ion-col>
+            </ion-row>
+          </form>
+        </ion-card-content>
+      </ion-card>
+    </ion-col>
+  </ion-row>
 </ion-content>

@@ -17,11 +17,11 @@
       </ion-item>
       <ion-item>
         <ion-label><strong>Fecha de inicio:</strong></ion-label>
-        <ion-text>{{ project.startDate | date }}</ion-text>
+        <ion-text>{{ project.startDate | date : "dd/MM/yyyy" }}</ion-text>
       </ion-item>
       <ion-item>
         <ion-label><strong>Fecha de finalización:</strong></ion-label>
-        <ion-text>{{ project.endDate | date }}</ion-text>
+        <ion-text>{{ project.endDate | date : "dd/MM/yyyy" }}</ion-text>
       </ion-item>
       <ion-item>
         <ion-label><strong>Ciudad:</strong></ion-label>

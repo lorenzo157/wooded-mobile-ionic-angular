@@ -73,6 +73,7 @@ export class AccelerometerCoordinator {
       "
       expand="block"
       color="secondary"
+      class="measurement-button"
     >
       {{ isMeasuringDistance ? 'Calculando distancia...' : 'Medir distancia' }}
     </ion-button>
@@ -81,6 +82,7 @@ export class AccelerometerCoordinator {
       [disabled]="!isMeasuringDistance"
       expand="block"
       color="secondary"
+      class="measurement-button"
     >
       Detener
     </ion-button>
@@ -102,6 +104,7 @@ export class AccelerometerCoordinator {
       "
       color="primary"
       expand="block"
+      class="measurement-button"
     >
       {{ isMeasuringHeight ? 'Calculando altura...' : 'Medir altura' }}
     </ion-button>
@@ -110,6 +113,7 @@ export class AccelerometerCoordinator {
       [disabled]="!isMeasuringHeight"
       color="primary"
       expand="block"
+      class="measurement-button"
     >
       Detener
     </ion-button>
@@ -126,16 +130,12 @@ export class HeightMeasureComponent implements OnInit, OnDestroy {
   y: number = 0;
   z: number = 0;
   distance: number = 10; // Default distance in meters for height calculation
-  userHeight: number = 1.74; // Default height in meters
-
+  humanFaceHeight: number = 0.3; // A little more than average human face height in meters
+  userHeight: number = 1.7; // 1.70 Default height in meters
+  heightPear: number = this.userHeight - this.humanFaceHeight; //
   private accelCoordinator = AccelerometerCoordinator.getInstance();
 
-  @Output() heightChange = new EventEmitter<{
-    height: number;
-    x: number;
-    y: number;
-    z: number;
-  }>();
+  @Output() heightChange = new EventEmitter<number>();
 
   constructor(private authService: AuthService) {
     // Get user height once at initialization since it never changes
@@ -179,12 +179,7 @@ export class HeightMeasureComponent implements OnInit, OnDestroy {
 
           this.calculateHeight(x, y, z);
           // Emit updated values
-          this.heightChange.emit({
-            height: this.height,
-            x: this.x,
-            y: this.y,
-            z: this.z,
-          });
+          this.heightChange.emit(this.height);
         }
       );
 
@@ -199,12 +194,7 @@ export class HeightMeasureComponent implements OnInit, OnDestroy {
       this.isMeasuringHeight = false;
       await this.accelCoordinator.releaseAccelerometer('height');
 
-      this.heightChange.emit({
-        height: this.height,
-        x: this.x,
-        y: this.y,
-        z: this.z,
-      });
+      this.heightChange.emit(this.height);
     }
   }
 
@@ -241,14 +231,14 @@ export class HeightMeasureComponent implements OnInit, OnDestroy {
   calculateHeight(x: number, y: number, z: number) {
     const magnitude = Math.sqrt(x ** 2 + y ** 2 + z ** 2);
     if (magnitude === 0) {
-      this.height = this.userHeight;
+      this.height = this.heightPear;
     } else {
       const tiltAngleRadians = Math.acos(Math.abs(y) / magnitude);
       if (tiltAngleRadians < 0.1) {
-        this.height = this.userHeight; // Avoid division by zero or very small angles
+        this.height = this.heightPear; // Avoid division by zero or very small angles
       } else {
         this.height =
-          this.distance / Math.tan(tiltAngleRadians) + this.userHeight; // Assuming a distance of 10 meters
+          this.distance / Math.tan(tiltAngleRadians) + this.heightPear; // Assuming a distance of 10 meters
       }
     }
   }
@@ -261,7 +251,7 @@ export class HeightMeasureComponent implements OnInit, OnDestroy {
       if (tiltAngleRadians < 0.1) {
         this.distance = 10; // Avoid division by zero or very small angles
       } else {
-        this.distance = Math.tan(tiltAngleRadians) * this.userHeight; // Calculate distance based on tilt angle and user height
+        this.distance = Math.tan(tiltAngleRadians) * this.heightPear; // Calculate distance based on tilt angle and user height
       }
     }
   }

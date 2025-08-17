@@ -1,7 +1,7 @@
 import { NumberToStringMap } from '../tree/tree.service';
 
-//export const API = 'https://2c77-2803-9800-b802-7ec0-35a4-8f71-128f-413c.ngrok-free.app';
-export const API = 'http://localhost:3000';
+export const API = 'https://8a4c7cab84b8.ngrok-free.app';
+//export const API = 'http://localhost:3000';
 
 export const windExposureOptions: string[] = [
   'protegido',
@@ -31,7 +31,11 @@ export const frequencyUseOptions: string[] = [
   'ocasional',
   'frecuente',
 ];
-export const potentialDamageOptions: string[] = ['Diametro de la parte < 10cm', 'Diametro de la parte entre 10-45cm', 'Diametro de la parte > 45cm'];
+export const potentialDamageOptions: string[] = [
+  'Diametro de la parte < 10cm',
+  'Diametro de la parte entre 10-45cm',
+  'Diametro de la parte > 45cm',
+];
 export const conflictOptions: string[] = [
   'obstruccion visual de señaletica vial',
   'obstruccion de visual(transito humano y vehicular)',

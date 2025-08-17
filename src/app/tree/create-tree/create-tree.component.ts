@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { debounceTime } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { TreeService } from '../tree.service';
 import { Location } from '@angular/common';
 import { CreateTreeDto } from '../dto/create-tree.dto';
@@ -123,20 +124,18 @@ export class CreateTreeComponent implements OnInit {
   showWarning: boolean = false;
   operation: string = 'Registración';
   image: any;
-  tiltValues = { angle: 0, x: 0, y: 0, z: 0 };
-  heightValues = { height: 0, x: 0, y: 0, z: 0 };
+  tiltValues = 0;
+  heightValues = 0;
   height: number = 0;
   pathPhoto: string = '';
 
-  onTiltChange(event: { angle: number; x: number; y: number; z: number }) {
+  onTiltChange(event:  number ) {
     this.tiltValues = event;
-    this.treeForm.get('incline')?.setValue(Number(event.angle.toFixed(2)));
+    this.treeForm.get('incline')?.setValue(Number(event.toFixed(2)));
   }
-  onHeightChange(event: { height: number; x: number; y: number; z: number }) {
-    console.log(' event.height:', event.height);
-    console.log(' typeof event.height:', typeof event.height);
+  onHeightChange(event:  number ) {
     this.heightValues = event;
-    this.treeForm.get('height')?.setValue(Number(event.height.toFixed(2)));
+    this.treeForm.get('height')?.setValue(Number(event.toFixed(2)));
   }
   constructor(
     private route: ActivatedRoute,
@@ -394,17 +393,31 @@ export class CreateTreeComponent implements OnInit {
   async getLocation() {
     try {
       const position = await Geolocation.getCurrentPosition();
-      // Update form values
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+
+      // Update form values with coordinates
       this.treeForm.patchValue({
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
+        latitude: lat,
+        longitude: lon,
       });
+
+      // Get address from coordinates using reverse geocoding
+      const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`;
+      const response = await firstValueFrom(this.http.get<any>(url));
+
+      if (response?.display_name) {
+        this.treeForm.patchValue({
+          address: response.display_name,
+        });
+      }
     } catch (error) {
       if (error instanceof Error) {
         this.uiService.alert(`${error.message}`, 'Geolocalización Error');
       }
     }
   }
+
   addItem(nameArray: string) {
     (this as any)[nameArray + 'Names'].push(
       this.fb.control('', Validators.required)
@@ -464,8 +477,12 @@ export class CreateTreeComponent implements OnInit {
         resultType: CameraResultType.DataUrl,
         source: CameraSource.Camera,
       });
-    } catch (error) {
-      this.uiService.alert('Error al tomar la foto', 'Error');
+    } catch (error: any) {
+      // Don't show error if user cancelled - this is normal behavior
+      if (error?.message && !error.message.toLowerCase().includes('cancel')) {
+        this.uiService.alert('Error al tomar la foto', 'Error');
+      }
+      // If user cancelled, just do nothing (no error message needed)
     }
   }
 
@@ -1072,9 +1089,15 @@ export class CreateTreeComponent implements OnInit {
       const slendernessCoefficent_number = heightValue / this.dch;
       let slendernessDefectValue = 1;
 
-      if (slendernessCoefficent_number > 60 && slendernessCoefficent_number <= 80) {
+      if (
+        slendernessCoefficent_number > 60 &&
+        slendernessCoefficent_number <= 80
+      ) {
         slendernessDefectValue = 2;
-      } else if (slendernessCoefficent_number > 80 && slendernessCoefficent_number <= 100) {
+      } else if (
+        slendernessCoefficent_number > 80 &&
+        slendernessCoefficent_number <= 100
+      ) {
         slendernessDefectValue = 3;
       } else if (slendernessCoefficent_number > 100) {
         slendernessDefectValue = 4;
@@ -1083,7 +1106,9 @@ export class CreateTreeComponent implements OnInit {
       if (slendernessDefectValue > 1) {
         troncoDefects.push({
           label: 'Coeficiente de esbeltez',
-          value: `${slendernessCoefficent_number.toFixed(1)} - riesgo: ${slendernessDefectValue}`,
+          value: `${slendernessCoefficent_number.toFixed(
+            1
+          )} - riesgo: ${slendernessDefectValue}`,
         });
       }
     }

@@ -14,6 +14,30 @@
       <ion-card-header class="sub-title blue">
         <ion-card-title class="text-color-white">📌 Ubicación </ion-card-title>
       </ion-card-header>
+      <ion-item
+        [class.has-value]="hasValue('latitude') || hasValue('longitude')"
+      >
+        <ion-label>Obtener posición actual</ion-label>
+        <ion-checkbox
+          formControlName="useCurrentPosition"
+          class="checkbox"
+          (ionChange)="onTogglePosition($event)"
+        ></ion-checkbox>
+        <ion-input
+          [readonly]="true"
+          type="number"
+          label="Latitud"
+          labelPlacement="floating"
+          formControlName="latitude"
+        ></ion-input>
+        <ion-input
+          [readonly]="true"
+          type="number"
+          label="Longitud"
+          labelPlacement="floating"
+          formControlName="longitude"
+        ></ion-input>
+      </ion-item>
       <!-- address -->
       <ion-item lines="none" [class.has-value]="hasValue('address')">
         <ion-input
@@ -39,7 +63,12 @@
           <ion-button (click)="takePhoto()">Tomar foto 📸</ion-button>
         </ion-col>
         <ion-col size="auto">
-          <ion-button  *ngIf="image" (click)="removePhoto()" color="danger" fill="outline">
+          <ion-button
+            *ngIf="image"
+            (click)="removePhoto()"
+            color="danger"
+            fill="outline"
+          >
             <ion-icon name="trash" slot="start"></ion-icon>
             Quitar foto
           </ion-button>
@@ -54,30 +83,6 @@
           class="preview-image"
         />
       </ion-card-content>
-      <ion-item
-        [class.has-value]="hasValue('latitude') || hasValue('longitude')"
-      >
-        <ion-label>Obtener posición actual</ion-label>
-        <ion-checkbox
-          formControlName="useCurrentPosition"
-          class="checkbox"
-          (ionChange)="onTogglePosition($event)"
-        ></ion-checkbox>
-        <ion-input
-          [readonly]="true"
-          type="number"
-          label="Latitud"
-          labelPlacement="floating"
-          formControlName="latitude"
-        ></ion-input>
-        <ion-input
-          [readonly]="true"
-          type="number"
-          label="Longitud"
-          labelPlacement="floating"
-          formControlName="longitude"
-        ></ion-input>
-      </ion-item>
       <!-- treesInTheBlock -->
       @if (projectType === 'muestreo') {
       <ion-item [class.has-value]="hasValue('treesInTheBlock')">
@@ -182,18 +187,13 @@
           </ion-select>
         </ion-item>
         <!-- incline -->
-        <!-- <div>
-            <p>{{tiltValues.x}}</p>
-            <p>{{tiltValues.y}}</p>
-            <p>{{tiltValues.z}}</p>
-          </div> -->
         <div class="section">
           <ion-card-header>
             <ion-card-title> Cálculo de inclinación 📐 </ion-card-title>
           </ion-card-header>
           <ion-card-content>
             <tilt-measure (tiltChange)="onTiltChange($event)"></tilt-measure>
-            <ion-item lines="none" [class.has-value]="hasValue('incline')">
+            <ion-item lines="none">
               <ion-input
                 type="number"
                 min="0"
@@ -209,14 +209,14 @@
         <div class="section">
           <ion-card-header>
             <ion-card-title class="section-header">
-               Cálculo de altura 📏
+              Cálculo de altura 📏
             </ion-card-title>
           </ion-card-header>
           <ion-card-content>
             <height-measure
               (heightChange)="onHeightChange($event)"
             ></height-measure>
-            <ion-item lines="none" [class.has-value]="hasValue('height')">
+            <ion-item lines="none">
               <ion-input
                 type="number"
                 min="0"
@@ -350,7 +350,7 @@
           </ion-card-header>
 
           <ion-card-content>
-            <ion-item [class.has-value]="hasValue('conflictsNames')">
+            <ion-item>
               <ion-select
                 formControlName="conflictsNames"
                 multiple="true"
@@ -534,7 +534,7 @@
         </ion-item>
         <ion-card-header class="sub-title orange">
           <ion-card-title class="text-color-white">
-            🌳 Defectos en tronco y cuello
+            🪵 Defectos en tronco y cuello
           </ion-card-title>
         </ion-card-header>
         <ion-item [class.has-value]="hasValue('gallsTermiteMoundsAnthills')">
@@ -892,7 +892,9 @@
           <!-- Defectos en Raíces -->
           @if (selectedDefectsRaiz.length > 0) {
           <ion-card-header class="defect-zone-header">
-            <ion-card-title class="defect-zone-title">🌱 Defectos en Raíces</ion-card-title>
+            <ion-card-title class="defect-zone-title"
+              >🌱 Defectos en Raíces</ion-card-title
+            >
           </ion-card-header>
           <ion-list>
             @for (defect of selectedDefectsRaiz; track defect) {
@@ -911,7 +913,9 @@
           <!-- Defectos en Tronco -->
           @if (selectedDefectsTronco.length > 0) {
           <ion-card-header class="defect-zone-header">
-            <ion-card-title class="defect-zone-title">🌳 Defectos en Tronco</ion-card-title>
+            <ion-card-title class="defect-zone-title"
+              >🪵 Defectos en Tronco</ion-card-title
+            >
           </ion-card-header>
           <ion-list>
             @for (defect of selectedDefectsTronco; track defect) {
@@ -930,7 +934,9 @@
           <!-- Defectos en Ramas -->
           @if (selectedDefectsRama.length > 0) {
           <ion-card-header class="defect-zone-header">
-            <ion-card-title class="defect-zone-title">🌿 Defectos en Ramas</ion-card-title>
+            <ion-card-title class="defect-zone-title"
+              >🌿 Defectos en Ramas</ion-card-title
+            >
           </ion-card-header>
           <ion-list>
             @for (defect of selectedDefectsRama; track defect) {
@@ -944,9 +950,9 @@
             </ion-row>
             }
           </ion-list>
-          }
-
-          @if (selectedDefectsRaiz.length === 0 && selectedDefectsTronco.length === 0 && selectedDefectsRama.length === 0) {
+          } @if (selectedDefectsRaiz.length === 0 &&
+          selectedDefectsTronco.length === 0 && selectedDefectsRama.length ===
+          0) {
           <ion-item>
             <ion-label color="medium" class="text-color-light-gray"
               >No hay defectos de riesgo seleccionados.</ion-label
@@ -984,7 +990,7 @@
           <ion-card-title>👷 Intervenciones </ion-card-title>
         </ion-card-header>
         <ion-card-content>
-          <ion-item [class.has-value]="hasValue('interventionsNames')">
+          <ion-item>
             <ion-select
               formControlName="interventionsNames"
               multiple="true"

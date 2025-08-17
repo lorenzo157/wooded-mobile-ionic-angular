@@ -1,9 +1,24 @@
-import type { CapacitorConfig } from '@capacitor/cli';
+import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'io.ionic.starter',
-  appName: 'movil-front',
-  webDir: 'www',
+  appId: 'ar.edu.unl.yvira',
+  appName: 'Yvira',
+  webDir: 'www/browser',
+  server: {
+    androidScheme: 'https',
+  },
+  plugins: {
+    Keyboard: {
+      resize: 'body',
+      style: 'default', // Follows system dark/light mode
+      resizeOnFullScreen: true,
+    },
+    SplashScreen: {
+      launchShowDuration: 2000,
+      backgroundColor: '#ffffff',
+      showSpinner: false,
+    },
+  },
 };
 
 export default config;

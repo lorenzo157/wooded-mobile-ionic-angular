@@ -16,3 +16,12 @@
     color: var(--ion-color-dark);
   }
 }
+.bottom-buttons {
+  position: sticky;
+  bottom: 0;
+  background: var(--ion-background-color);
+  padding: 4px 24px;
+  margin-bottom: env(safe-area-inset-bottom, 0px);
+  z-index: 10;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+}

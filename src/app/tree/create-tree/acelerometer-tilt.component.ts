@@ -1,6 +1,4 @@
 import { Component, EventEmitter, Output, OnDestroy } from '@angular/core';
-import { PluginListenerHandle } from '@capacitor/core';
-import { Motion } from '@capacitor/motion';
 import { IonicModule } from '@ionic/angular';
 
 // Import the coordinator from height component
@@ -13,6 +11,7 @@ import { AccelerometerCoordinator } from './acelerometer-height.component';
       (click)="startMeasuringTilt()"
       [disabled]="isMeasuringTilt || !canStartMeasuring()"
       expand="block"
+      class="measurement-button"
     >
       {{ isMeasuringTilt ? 'Calculando inclinación...' : 'Medir inclinación' }}
     </ion-button>
@@ -20,6 +19,7 @@ import { AccelerometerCoordinator } from './acelerometer-height.component';
       (click)="stopMeasuringTilt()"
       [disabled]="!isMeasuringTilt"
       expand="block"
+      class="measurement-button"
     >
       Detener
     </ion-button>
@@ -37,12 +37,7 @@ export class TiltMeasureComponent implements OnDestroy {
 
   private accelCoordinator = AccelerometerCoordinator.getInstance();
 
-  @Output() tiltChange = new EventEmitter<{
-    angle: number;
-    x: number;
-    y: number;
-    z: number;
-  }>();
+  @Output() tiltChange = new EventEmitter<number>();
 
   ngOnDestroy() {
     // Clean up when component is destroyed
@@ -72,12 +67,7 @@ export class TiltMeasureComponent implements OnDestroy {
 
           this.calculateTiltAngle(x, y, z);
           // Emit updated values
-          this.tiltChange.emit({
-            angle: this.angle,
-            x: this.x,
-            y: this.y,
-            z: this.z,
-          });
+          this.tiltChange.emit(this.angle);
         }
       );
 
@@ -92,12 +82,7 @@ export class TiltMeasureComponent implements OnDestroy {
       this.isMeasuringTilt = false;
       await this.accelCoordinator.releaseAccelerometer('tilt');
 
-      this.tiltChange.emit({
-        angle: this.angle,
-        x: this.x,
-        y: this.y,
-        z: this.z,
-      });
+      this.tiltChange.emit(this.angle);
     }
   }
 

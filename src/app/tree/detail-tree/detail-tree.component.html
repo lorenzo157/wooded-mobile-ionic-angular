@@ -336,15 +336,33 @@
       }
     </ion-card-content>
   </ion-card>
-  <ion-row class="ion-justify-content-center button-container">
-    <ion-button expand="block" color="primary" (click)="updateTree()">
-      Actualizar árbol
-    </ion-button>
-  </ion-row>
-  <ion-row class="ion-justify-content-center button-container">
-    <ion-button expand="block" color="secondary" (click)="createTree()">
-      Registrar un nuevo árbol 🌳➕
-    </ion-button>
-  </ion-row>
 </ion-content>
+
+<!-- Move buttons outside ion-content -->
+<div class="bottom-buttons">
+  <ion-row class="ion-justify-content-center">
+    <ion-col size="9" size-md="6">
+      <ion-button
+        expand="block"
+        color="primary"
+        (click)="updateTree()"
+        size="small"
+      >
+        Actualizar árbol
+      </ion-button>
+    </ion-col>
+  </ion-row>
+  <ion-row class="ion-justify-content-center">
+    <ion-col size="10" size-md="6">
+      <ion-button
+        expand="block"
+        color="secondary"
+        (click)="createTree()"
+        size="small"
+      >
+        Registrar nuevo árbol 🌳➕
+      </ion-button>
+    </ion-col>
+  </ion-row>
+</div>
 }

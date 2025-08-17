@@ -15,36 +15,35 @@
         [(ngModel)]="filterId"
         type="number"
         clearInput
-        >
+      >
       </ion-input>
     </ion-card-header>
     @if (trees.length > 0) {
-      <ion-list>
-        @for (tree of filteredTrees; track tree) {
-          <ion-item>
-            <ion-label (click)="viewTreeDetails(tree.idTree)">
-              <div class="tree-info">
-                <p class="tree-id">ID: {{ tree.idTree }}</p>
-                <p><span class="label">Dirección:</span> {{ tree.address }}</p>
-                <p>
-                  <span class="label">Fecha:</span>
-                  {{ tree.datetime }}
-                </p>
-                <p>
-                  <span class="label">Valor del árbol:</span>
-                  {{ tree.treeValue || "N/A" }}
-                </p>
-                <p><span class="label">Riesgo:</span> {{ tree.risk || "N/A" }}</p>
-              </div>
-            </ion-label>
-          </ion-item>
-        }
-      </ion-list>
-    } @else {
+    <ion-list>
+      @for (tree of filteredTrees; track tree) {
       <ion-item>
-        <ion-label>Aún no se registraron árboles en este proyecto</ion-label>
+        <ion-label (click)="viewTreeDetails(tree.idTree)">
+          <div class="tree-info">
+            <p class="tree-id">ID: {{ tree.idTree }}</p>
+            <p><span class="label">Dirección:</span> {{ tree.address }}</p>
+            <p>
+              <span class="label">Fecha:</span>
+              {{ tree.datetime | date : "dd/MM/yyyy" }}
+            </p>
+            <p>
+              <span class="label">Valor del árbol:</span>
+              {{ tree.treeValue || "N/A" }}
+            </p>
+            <p><span class="label">Riesgo:</span> {{ tree.risk || "N/A" }}</p>
+          </div>
+        </ion-label>
       </ion-item>
+      }
+    </ion-list>
+    } @else {
+    <ion-item>
+      <ion-label>Aún no se registraron árboles en este proyecto</ion-label>
+    </ion-item>
     }
-
   </ion-card>
 </ion-content>
