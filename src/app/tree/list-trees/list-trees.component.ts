@@ -51,7 +51,9 @@ export class ListTreesComponent implements OnInit {
   }
   get filteredTrees() {
     return this.filterId
-      ? this.trees.filter((tree) => tree.idTree === this.filterId)
+      ? this.trees.filter((tree) =>
+          tree.idTree.toString().includes(this.filterId!.toString())
+        )
       : this.trees;
   }
 }

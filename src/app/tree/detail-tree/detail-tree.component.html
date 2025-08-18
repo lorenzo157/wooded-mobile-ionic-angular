@@ -28,6 +28,12 @@
       </ion-item>
       <ion-item>
         <ion-label
+          ><strong>Fecha de relevo:</strong>
+          {{ tree.datetime | date : "dd/MM/yyyy" }}</ion-label
+        >
+      </ion-item>
+      <ion-item>
+        <ion-label
           ><strong>Tiempo de relevo:</strong>
           {{ tree.treeInfoCollectionTime || "N/A" }}</ion-label
         >

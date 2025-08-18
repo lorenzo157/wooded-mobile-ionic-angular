@@ -8,7 +8,7 @@
     }}</ion-title>
   </ion-toolbar>
 </ion-header>
-<ion-content>
+<ion-content class="safe-area-inset-bottom">
   <ion-card>
     <form [formGroup]="treeForm" (ngSubmit)="onSubmit()">
       <ion-card-header class="sub-title blue">
@@ -588,17 +588,6 @@
             }
           </div>
           }
-        </ion-item>
-        <ion-item [class.has-value]="hasValue('cankersTrunk')">
-          <ion-label position="stacked">Cancros de tronco o cuello</ion-label>
-          <ion-select formControlName="cankersTrunk">
-            @for (keyValue of cankersTrunkEntries; track keyValue) {
-            <ion-select-option [value]="keyValue[0]">
-              {{ keyValue[1] }}
-            </ion-select-option>
-            }
-            <ion-select-option [value]="null">sin cancro</ion-select-option>
-          </ion-select>
         </ion-item>
         <ion-item [class.has-value]="hasValue('isLostOrDeadBark')">
           <ion-label>¿Hay corteza pérdida o muerta en el tronco?</ion-label>

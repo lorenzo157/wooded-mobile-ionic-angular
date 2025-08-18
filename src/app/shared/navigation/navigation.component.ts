@@ -1,10 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Location } from '@angular/common';
 import { AuthService } from '../../auth/auth.service'; // Adjust import as necessary
 import { IonicModule } from '@ionic/angular';
 import { UiService } from 'src/app/utils/ui.service';
 import { Router } from '@angular/router';
-
+import { Platform } from '@ionic/angular';
+import { Subscription } from 'rxjs';
 @Component({
   selector: 'app-navigation',
   templateUrl: './navigation.component.html',
@@ -12,20 +13,48 @@ import { Router } from '@angular/router';
   imports: [IonicModule],
 })
 export class NavigationComponent {
+  private backButtonSubscription?: Subscription;
   constructor(
     private location: Location,
     private authService: AuthService,
     private uiService: UiService,
     private router: Router,
+    private platform: Platform
   ) {}
+  ngOnInit() {
+    // Handle hardware back button
+    this.backButtonSubscription =
+      this.platform.backButton.subscribeWithPriority(10, async () => {
+        if (this.router.url.includes('/createtree/')) {
+          await this.showBackConfirmation();
+        } else {
+          this.location.back();
+        }
+      });
+  }
 
+  ngOnDestroy() {
+    // Clean up subscription
+    if (this.backButtonSubscription) {
+      this.backButtonSubscription.unsubscribe();
+    }
+  }
   // Navigate back to the previous page
   async goBack() {
     const currentRoute = this.router.url;
     console.log(currentRoute);
     if (this.router.url.includes('/createtree/')) {
-      // only apply for create or edit tree routes
-      await this.uiService.alert('¿Seguro que quieres volver? Los datos ingresados se perderán', '⚠️', [
+      await this.showBackConfirmation();
+    } else {
+      this.location.back();
+    }
+  }
+
+  private async showBackConfirmation() {
+    await this.uiService.alert(
+      '¿Seguro que quieres volver? Los datos ingresados se perderán',
+      '⚠️',
+      [
         {
           text: 'Cancelar',
           role: 'cancel',
@@ -33,13 +62,11 @@ export class NavigationComponent {
         {
           text: 'Confirmar',
           handler: () => {
-            this.location.back(); // Navigate back if confirmed
+            this.location.back();
           },
         },
-      ]);
-    } else {
-      this.location.back(); // Directly navigate back for other routes
-    }
+      ]
+    );
   }
 
   async logout() {

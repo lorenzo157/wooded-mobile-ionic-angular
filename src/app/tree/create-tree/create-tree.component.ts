@@ -235,8 +235,7 @@ export class CreateTreeComponent implements OnInit {
           this.selectedTreeType = null;
           this.filterTreeTypes(value || '');
           this.showSuggestions = !!(
-            value &&
-            value.trim().length > 0 &&
+            value?.trim().length > 0 &&
             this.filteredTreeTypes.length > 0
           );
         }
@@ -392,7 +391,14 @@ export class CreateTreeComponent implements OnInit {
 
   async getLocation() {
     try {
-      const position = await Geolocation.getCurrentPosition();
+
+      // Use high accuracy options
+      const position = await Geolocation.getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 60000
+      });
+
       const lat = position.coords.latitude;
       const lon = position.coords.longitude;
 
@@ -678,7 +684,7 @@ export class CreateTreeComponent implements OnInit {
         fissuresBranches
       );
       addDefect(
-        'pudricion de madera en ramas',
+        'pudricion de madera en rama',
         this.treeForm.get('woodRot')?.value,
         woodRot
       );
@@ -933,7 +939,7 @@ export class CreateTreeComponent implements OnInit {
       {
         control: 'forkBranch',
         entries: this.forkBranchEntries,
-        label: 'Horqueta de ramas',
+        label: 'Horqueta de rama',
         zone: 'rama',
       },
       {
@@ -1258,7 +1264,7 @@ export class CreateTreeComponent implements OnInit {
       'ramas muertas': 'deadBranches',
       'ramas sobre extendidas': 'overExtendedBranches',
       'rajaduras de rama': 'fissuresBranches',
-      'pudricion de madera en ramas': 'woodRot',
+      'pudricion de madera en rama': 'woodRot',
       'interferencia con red electrica': 'interferenceWithTheElectricalGrid',
     };
 

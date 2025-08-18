@@ -9,7 +9,7 @@
     <ion-title>Lista de Proyectos Asignados</ion-title>
   </ion-item>
 </ion-header>
-<ion-content>
+<ion-content class="safe-area-inset-bottom">
   <ion-card>
     <ion-card-header>
       <ion-input
@@ -32,10 +32,10 @@
           </h2>
           <p>{{ project.projectDescription }}</p>
           <p>
-            <strong>Fecha de inicio:</strong> {{ project.startDate | date }}
+            <strong>Fecha de inicio:</strong> {{ project.startDate | date : "dd/MM/yyyy" }}
           </p>
           <p>
-            <strong>Fecha de finalización:</strong> {{ project.endDate | date }}
+            <strong>Fecha de finalización:</strong> {{ project.endDate | date : "dd/MM/yyyy" }}
           </p>
           <p>
             <strong>Ubicación:</strong> {{ project.cityName }},
