@@ -7,10 +7,6 @@ import { CreateTreeDto } from './dto/create-tree.dto';
 import { ReadTreeDto } from './dto/read-tree.dto';
 import { SimplyReadTreeDto } from './dto/simply-read-tree.dto';
 
-export interface NumberToStringMap {
-  [key: number]: string;
-}
-
 @Injectable({
   providedIn: 'root',
 })

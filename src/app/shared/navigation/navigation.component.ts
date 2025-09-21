@@ -52,7 +52,9 @@ export class NavigationComponent {
 
   private async showBackConfirmation() {
     await this.uiService.alert(
-      '¿Seguro que quieres volver? Los datos ingresados se perderán',
+      `¿Seguro que quieres volver? Los datos ingresados se perderán.
+
+Nota: puedes guardar tu progreso registrando el árbol, anotar su ID y continuar el trabajo luego mediante la función "Actualizar".`,
       '⚠️',
       [
         {

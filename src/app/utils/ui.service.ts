@@ -42,7 +42,7 @@ export class UiService {
         spinner: 'bubbles',
         message: 'Espere por favor...',
         translucent: true,
-        backdropDismiss: false,
+        backdropDismiss: true,
       });
       await this.loading.present();
     } else if (this.loading) {

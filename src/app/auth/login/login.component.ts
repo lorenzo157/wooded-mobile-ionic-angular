@@ -18,7 +18,7 @@ export class LoginComponent {
     private fb: FormBuilder,
     private router: Router,
     private authService: AuthService,
-    private uiService: UiService,
+    private uiService: UiService
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -37,8 +37,14 @@ export class LoginComponent {
             this.router.navigate(['project']);
           },
           error: (error) => {
+            let errorMessage = 'Error desconocido';
+            if (error?.error?.message == 'Invalid credentials') {
+              errorMessage = 'Credenciales incorrectas.';
+            } else if (error?.status == 0) {
+              errorMessage = 'No se pudo conectar con el servidor.';
+            }
             this.uiService.cargando();
-            this.uiService.alert('Credenciales incorrectas.', 'Error');
+            this.uiService.alert(errorMessage, 'Error');
           },
         });
     }

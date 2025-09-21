@@ -19,15 +19,6 @@ interface TreeType {
   genus: string;
 }
 import {
-  windExposureOptions,
-  vigorOptions,
-  canopyDensityOptions,
-  growthSpaceOptions,
-  treeValueOptions,
-  frequencyUseOptions,
-  potentialDamageOptions,
-  conflictOptions,
-  interventionOptions,
   fruitingBodiesOfFungiOnNeckOrRoots,
   mechanicalDamageToRoots,
   stranglingRoots,
@@ -54,7 +45,18 @@ import {
   fissuresBranches,
   woodRot,
   interferenceWithTheElectricalGrid,
-} from '../../constants/API';
+} from '../../constants/defects-text-level-list';
+import {
+  windExposureOptions,
+  vigorOptions,
+  canopyDensityOptions,
+  growthSpaceOptions,
+  treeValueOptions,
+  frequencyUseOptions,
+  potentialDamageOptions,
+  conflictOptions,
+  interventionOptions,
+} from '../../constants/options-list';
 import { ReadDefectTreeDto } from '../dto/read-defect-tree.dto';
 
 @Component({
@@ -129,11 +131,11 @@ export class CreateTreeComponent implements OnInit {
   height: number = 0;
   pathPhoto: string = '';
 
-  onTiltChange(event:  number ) {
+  onTiltChange(event: number) {
     this.tiltValues = event;
     this.treeForm.get('incline')?.setValue(Number(event.toFixed(2)));
   }
-  onHeightChange(event:  number ) {
+  onHeightChange(event: number) {
     this.heightValues = event;
     this.treeForm.get('height')?.setValue(Number(event.toFixed(2)));
   }
@@ -235,8 +237,7 @@ export class CreateTreeComponent implements OnInit {
           this.selectedTreeType = null;
           this.filterTreeTypes(value || '');
           this.showSuggestions = !!(
-            value?.trim().length > 0 &&
-            this.filteredTreeTypes.length > 0
+            value?.trim().length > 0 && this.filteredTreeTypes.length > 0
           );
         }
         this.isSelectingFromList = false;
@@ -391,12 +392,11 @@ export class CreateTreeComponent implements OnInit {
 
   async getLocation() {
     try {
-
       // Use high accuracy options
       const position = await Geolocation.getCurrentPosition({
         enableHighAccuracy: true,
         timeout: 15000,
-        maximumAge: 60000
+        maximumAge: 60000,
       });
 
       const lat = position.coords.latitude;

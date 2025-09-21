@@ -1,6 +1,7 @@
 // app.component.ts
 import { Component, OnInit } from '@angular/core';
-//import { AuthService } from './core/auth/auth.service';
+import { Platform } from '@ionic/angular';
+import { StatusBar, Style } from '@capacitor/status-bar';
 
 @Component({
   selector: 'app-root',
@@ -9,11 +10,21 @@ import { Component, OnInit } from '@angular/core';
   standalone: false,
 })
 export class AppComponent implements OnInit {
-  constructor() {} //private authService: AuthService
+  constructor(private platform: Platform) {}
 
-  ngOnInit() {
-    // if (this.authService.isTokenExpired()) {
-    //   this.authService.logout();  // Logout if token expired
-    // }
+  async ngOnInit() {
+    await this.platform.ready();
+
+    if (this.platform.is('capacitor')) {
+      try {
+        // Status bar configuration (top)
+        await StatusBar.setOverlaysWebView({ overlay: false });
+        await StatusBar.setStyle({ style: Style.Default });
+        await StatusBar.setBackgroundColor({ color: '#ffffff' });
+
+      } catch (error) {
+        console.log('Status bar setup error:', error);
+      }
+    }
   }
 }

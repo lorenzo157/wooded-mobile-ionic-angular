@@ -86,6 +86,8 @@
   margin: 4px 16px;
 }
 
-.safe-area-inset-bottom {
-  margin-bottom: calc(env(safe-area-inset-bottom, 0px) + 4px);
+.navigation-spacer {
+  height: 48px;
+  width: 100%;
+  background: transparent;
 }
