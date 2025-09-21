@@ -54,7 +54,6 @@ export class DetailTreeComponent implements OnInit {
         this.defectDtoBranches = tree.readDefectDto.filter(
           (defect) => defect.defectZone === 'rama'
         );
-        console.log(this.tree.pathPhoto);
       },
       error: (error) => {
         this.uiService.alert('No se pudo cargar el árbol.', 'Error');

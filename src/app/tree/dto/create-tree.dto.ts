@@ -1,13 +1,14 @@
 import { CreateDefectTreeDto } from './create-defect-tree.dto';
 
 export class CreateTreeDto {
-  photoFile?: string;
-  cityBlock!: number;
+  photoFile?: string | null;
+  currentPhoto?: string | null;
+  cityBlock?: number | null;
   perimeter?: number | null;
   height?: number | null;
   incline?: number | null;
   treesInTheBlock?: number | null;
-  useUnderTheTree?: string;
+  useUnderTheTree?: string | null;
   frequencyUse?: number | null;
   potentialDamage?: number | null;
   isMovable?: boolean | null;

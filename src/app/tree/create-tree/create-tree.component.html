@@ -76,9 +76,9 @@
       </ion-row>
 
       <!-- Photo preview -->
-      <ion-card-content *ngIf="image || pathPhoto">
+      <ion-card-content *ngIf="image || currentPhoto">
         <img
-          [src]="image?.dataUrl || pathPhoto"
+          [src]="image?.dataUrl || currentPhoto"
           alt="Foto del árbol"
           class="preview-image"
         />

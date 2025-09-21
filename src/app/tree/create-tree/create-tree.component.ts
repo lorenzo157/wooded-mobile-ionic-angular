@@ -129,7 +129,7 @@ export class CreateTreeComponent implements OnInit {
   tiltValues = 0;
   heightValues = 0;
   height: number = 0;
-  pathPhoto: string = '';
+  currentPhoto: string | null = null;
 
   onTiltChange(event: number) {
     this.tiltValues = event;
@@ -829,7 +829,9 @@ export class CreateTreeComponent implements OnInit {
       );
     } // end if
 
-    if (this.image) newTree.photoFile = this.image.dataUrl?.split(',')[1];
+    newTree.photoFile = this.image?.dataUrl?.split(',')[1] || null;
+    newTree.currentPhoto = this.currentPhoto || null;
+
     console.log('newTree', newTree);
     this.treeService.createOrUpdateTree(newTree, this.idTree).subscribe({
       next: (idTree) => {
@@ -1221,11 +1223,9 @@ export class CreateTreeComponent implements OnInit {
       this.treeForm.get('frequencyUse')?.updateValueAndValidity();
     }
 
-    // Handle photo
-    if (tree.pathPhoto) {
-      // Store the existing photo filename
-      this.pathPhoto = tree.pathPhoto;
-    }
+    // Store the existing photo filename
+    this.currentPhoto = tree.pathPhoto;
+
     // Handle FormArrays
     tree.diseasesNames.forEach((value) => {
       (this as any)['diseasesNames'].push(
