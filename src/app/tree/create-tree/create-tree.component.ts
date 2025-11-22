@@ -478,10 +478,12 @@ export class CreateTreeComponent implements OnInit {
   async takePhoto() {
     try {
       this.image = await Camera.getPhoto({
-        quality: 90,
+        quality: 50,
         allowEditing: false,
         resultType: CameraResultType.DataUrl,
         source: CameraSource.Camera,
+        width: 800,
+        height: 800,
       });
     } catch (error: any) {
       // Don't show error if user cancelled - this is normal behavior
